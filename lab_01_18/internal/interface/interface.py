@@ -1,97 +1,11 @@
 import sys, os
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QGraphicsView, \
-    QGraphicsScene, QGridLayout, QTextEdit, QLabel, QRubberBand, QGraphicsEllipseItem
-from PyQt6.QtGui import QIcon
-from PyQt6.QtGui import QIcon, QBrush, QPen, QPainter
+from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, \
+    QGridLayout, QTextEdit, QLabel, QMenu, QMenuBar, QFileDialog
+from PyQt6.QtGui import QIcon, QAction,QPen
 from PyQt6.QtCore import Qt, QRect, QSize, QPointF, QLineF, QRectF
+import pyqtgraph as pg
 
 from ..process import process
-
-class CoordinateGrid(QGraphicsView):
-    def __init__(self, scene, parent):
-        super().__init__(scene, parent)
-        self.setRenderHint(QPainter.RenderHint.Antialiasing)
-        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-        self.rubberBand = QRubberBand(QRubberBand.Shape.Rectangle, self)
-        self.rubberBand.setVisible(False)
-        self.rubberBand.setGeometry(QRect(0, 0, 0, 0))
-        self.setMouseTracking(True)
-        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
-        self.setOptimizationFlags(QGraphicsView.OptimizationFlag.DontAdjustForAntialiasing)
-        self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.SmartViewportUpdate)
-        self.setRenderHint(QPainter.RenderHint.Antialiasing)
-        self.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        self.dragging = False
-        self.drag_start = QPointF()
-        self.drag_current = QPointF()
-        self.selected_point = None
-        self.points_set1 = set()
-        self.points_set2 = set()
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.dragging = True
-            self.drag_start = event.pos()
-            self.drag_current = event.pos()
-        elif event.button() == Qt.MouseButton.MiddleButton:
-            items = self.items(event.pos())
-            for item in items:
-                self.delete_point(item)
-
-        elif event.button() == Qt.MouseButton.RightButton:
-            brush = QBrush(Qt.GlobalColor.blue)
-            point = self.mapToScene(event.pos())
-            self.scene().addEllipse(point.x(), point.y(), 5, 5, QPen(Qt.GlobalColor.black), brush)
-            self.points_set2.add((point.x(), point.y()))
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton \
-            and abs(self.drag_start.x() - event.pos().x()) <= 1 \
-            and abs(self.drag_start.y() - event.pos().y()) <= 1:
-            brush = QBrush(Qt.GlobalColor.red)
-            point = self.mapToScene(event.pos())
-            self.scene().addEllipse(point.x(), point.y(), 5, 5, QPen(Qt.GlobalColor.black), brush)
-            self.points_set1.add((point.x(), point.y()))
-        self.selected_point = None
-        self.rubberBand.setVisible(False)
-        self.dragging = False
-
-    def mouseMoveEvent(self, event):
-        if self.dragging:
-            delta = event.pos() - self.drag_current
-            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - delta.x())
-            self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
-            self.drag_current = event.pos()
-
-    def wheelEvent(self, event):
-        if event.angleDelta().y() > 0:
-            factor = 1.25
-        else:
-            factor = 1 / 1.25
-        center = self.mapToScene(self.cursor().pos())
-        self.scale(factor, factor)
-
-    def draw_point(self, x: float, y: float):
-        pass    
-    
-    def delete_point(self, point) -> None:
-        if not isinstance(point, QGraphicsEllipseItem):
-            return
-        
-        if point.brush().color() == Qt.GlobalColor.red:
-            self.points_set1.remove((point.x(), point.y()))
-        elif point.brush().color() == Qt.GlobalColor.blue:
-            self.points_set2.remove((point.x(), point.y()))
-
-        self.scene().removeItem(point)
-
-    def points(self) -> tuple[set, set]:
-        return self.points_set1, self.points_set2
-                
-    def delete_points(self) -> None:
-        items = self.scene().items()
-        for item in items:
-            self.delete_point(item)
 
 class CoordinateInputField(QTextEdit):
     def __init__(self, parent):
@@ -103,8 +17,50 @@ class CoordinateInputField(QTextEdit):
         for i in range(0, len(coordinates) - 1, 2):
             points.add((coordinates[i], coordinates[i + 1]))
         return points
-        
+    
+class MenuBar(QMenuBar):
+    def __init__(self, parent: QMainWindow) -> None:
+        super().__init__(parent)
 
+        self.file_actions = QMenu("Файл", parent)
+        self.import_data = QAction("Импортировать данные", parent)
+        self.export_data = QAction("Экспортировать данные", parent)
+        self.file_actions.addAction(self.import_data)
+        self.file_actions.addAction(self.export_data)
+
+        self.task_condition = QAction("Условие", parent)
+        self.manual = QAction("Инструкция", parent)
+
+        self.import_data.triggered.connect(self.import_data_clicked)
+        self.export_data.triggered.connect(self.export_data_clicked)
+        self.manual.triggered.connect(self.show_manual)
+        self.task_condition.triggered.connect(self.show_task_cond)
+
+        self.addMenu(self.file_actions)
+        self.addAction(self.task_condition)
+        self.addAction(self.manual)
+
+    # Возможно, стоит перенести в функции главного окна
+    def import_data_clicked(self):
+        file_name, _ = QFileDialog.getOpenFileName(
+            self, "Открыть файл", "", #"Text files (*.txt);;CSV files (*.csv)"
+        )
+        if file_name:
+            print(f"Selected file: {file_name}")
+
+    def export_data_clicked(self):
+        file_name, _ = QFileDialog.getSaveFileName(
+            self, "Сохранить файл", "", #"Text files (*.txt);;CSV files (*.csv)"
+        )
+        if file_name:
+            print(f"Selected file: {file_name}")
+
+    def show_manual(self):
+        print("manual")
+
+    def show_task_cond(self):
+        print("task condition")
+        
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -114,13 +70,10 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon('icon.png'))
         self.setMinimumSize(640,400)
 
-        # Create a graphics scene and view
-        self.scene = QGraphicsScene(self)
-        self.view = CoordinateGrid(self.scene, self)
-        self.view.setMinimumSize(400,400)
-
-        # Add a rectangle to the scene
-        self.scene.addRect(10, 10, 100, 100)
+        self.coordinateGrid = pg.PlotWidget()
+        
+        self.menu_bar = MenuBar(self)
+        self.setMenuBar(self.menu_bar)
 
         # Create labels
         label1, label2 = QLabel(self), QLabel(self)
@@ -148,9 +101,9 @@ class MainWindow(QMainWindow):
 
         # Create a QGridLayout
         layout = QGridLayout()
-
+    
         # Add QGraphicsView to the layout
-        layout.addWidget(self.view, 0, 0, 3, 2)
+        layout.addWidget(self.coordinateGrid, 0, 0, 3, 2)
 
         # Add labels
         layout.addWidget(label1, 0, 2, 1, 1)
