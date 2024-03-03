@@ -1,0 +1,3 @@
+version: 1.0
+manual_path: "./internal/app_messages/manual.txt"
+task_path: "./internal/app_messages/task.txt"
