@@ -24,26 +24,38 @@ def find_max_area(set1: set, set2: set) -> tuple[float, Cicle, Cicle]:
 
     return max_area, max_s1_cicle, max_s2_cicle
 
+# TODO: Переименовать переменные получше
 def tangent_coordinates(cicle1: Cicle, cicle2: Cicle) -> tuple[tuple[float, float], tuple[float, float]]:
+    small, big = cicle1, cicle2
     if cicle1.radius() > cicle2.radius():
-        cicle1, cicle2 = cicle2, cicle1
+        small, big = big, small
 
-    center1, center2 = cicle1.center(), cicle2.center()
+    small_center, big_center = small.center(), big.center()
 
-    distance = math.dist(center1, center2)
-    distanceX = math.fabs(center1[0] - center2[0])
+    distance = math.dist(small_center, big_center)
+    distanceX = math.fabs(small_center[0] - big_center[0])
 
-    sigma = math.asin((cicle2.radius() - cicle1.radius()) / distance)
+    sigma = math.asin((big.radius() - small.radius()) / distance)
     beta = math.acos(distanceX / distance)
-    alpha = beta + sigma
 
-    top_point1 = (center1[0], center1[1] + cicle1.radius())
-    top_point2 = (center2[0], center2[1] + cicle2.radius())
+    if small_center[1] > big_center[1]:
+        alpha = beta - sigma
+    else:
+        alpha = beta + sigma
+    if small_center[1] > big_center[1] and small_center[0] < big_center[0] \
+        or small_center[1] < big_center[1] and small_center[0] > big_center[0]:
+        alpha *= -1
 
-    radius_vector1 = Vector2D(center1, top_point1)
-    radius_vector2 = Vector2D(center2, top_point2)
+    top_point1 = (small_center[0], small_center[1] + small.radius())
+    top_point2 = (big_center[0], big_center[1] + big.radius())
+
+    radius_vector1 = Vector2D(small_center, top_point1)
+    radius_vector2 = Vector2D(big_center, top_point2)
 
     radius_vector1.rotate(alpha)
     radius_vector2.rotate(alpha)
 
+    if cicle1.radius() > cicle2.radius():
+        return radius_vector2.end(), radius_vector1.end()
+    
     return radius_vector1.end(), radius_vector2.end()
