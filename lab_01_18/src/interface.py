@@ -9,8 +9,9 @@ import pyqtgraph as pg
 import math
 import src.maxarea as maxarea
 import src.objects as obj
-import src.setup as setup
 
+MANUAL_PATH = "./src/app_messages/manual.txt"
+TASK_PATH = "./src/app_messages/task.txt"
 
 class ScrolledLabel(QWidget):
     def __init__(self, text) -> None:
@@ -203,18 +204,12 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Лабораторная работа №1')
         self.setMinimumSize(920,550)
         
-        self.manual = setup.read_manual()
-        self.manualWidget = ScrolledLabel(self.manual)
-        self.manualWidget.hide()
-
-        self.task = setup.read_task()
-        self.taskWidget = QLabel(self.task)
-        self.taskWidget.hide()
+        self.manualWidget = self.__setup_manual()
+        self.taskWidget = self.__setup_task()
 
         self.menu_bar = MenuBar(self)
         self.setMenuBar(self.menu_bar)
 
-        # Create canvas
         self.canvas = Canvas(self)
 
         # Create table labels
@@ -240,7 +235,7 @@ class MainWindow(QMainWindow):
         self.check_box_set1.stateChanged.connect(lambda state: self.check_box_set2.setChecked(not state))
         self.check_box_set2.stateChanged.connect(lambda state: self.check_box_set1.setChecked(not state))
 
-        # Create output field
+        # Create output fields
         self.result_label = QLabel("Результат:")
         self.output_field = QLabel(self)
     
@@ -304,6 +299,33 @@ class MainWindow(QMainWindow):
         layoutWidget.addWidget(self.button_clear, 9, 2)
 
         return layoutWidget
+
+    def __setup_manual(self) -> ScrolledLabel:
+
+        try:
+            file = open(MANUAL_PATH, "r", encoding='utf-8')
+            manual = file.read()
+            file.close()
+        except:
+            manual = "Произошла ошибка во время получения инструкции."
+
+        manualWidget = ScrolledLabel(manual)
+        manualWidget.hide()
+
+        return manualWidget
+
+    def __setup_task(self) -> QLabel:
+        try:
+            file = open(TASK_PATH, "r", encoding='utf-8')
+            task = file.read()
+            file.close()
+        except:
+            task = "Произошла ошибка во время получения условия задачи."
+
+        taskWidget = QLabel(task)
+        taskWidget.hide()
+
+        return taskWidget
 
     def __calcucate_and_show_result(self) -> None:
     
@@ -475,3 +497,4 @@ class MainWindow(QMainWindow):
 
     def show_error_message(self, title: str, message: str) -> None:
         QMessageBox.warning(self, title, message)
+        
