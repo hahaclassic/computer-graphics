@@ -334,15 +334,17 @@ class MainWindow(QMainWindow):
         self.canvas.plot_cicle(cicle2, 'g')
         self.canvas.plot_points_auto_range(set([cicle1.center(), cicle2.center(), tangent_p1, tangent_p2]), 'w')
 
-    def add_point_set1(self, x: float, y: float) -> None:
-        rounded_x, rounded_y = round(x, 3), round(y, 3) 
-        self.set1.add((rounded_x, rounded_y))
-        self.table_set1.insert_point(rounded_x, rounded_y)
+    def add_point_set1(self, x: float, y: float) -> bool:
+        point = (round(x, 3), round(y, 3))
+        if point not in self.set1:
+            self.set1.add(point)
+            self.table_set1.insert_point(point[0], point[1])
 
-    def add_point_set2(self, x: float, y: float) -> None:
-        rounded_x, rounded_y = round(x, 3), round(y, 3) 
-        self.set2.add((rounded_x, rounded_y))
-        self.table_set2.insert_point(rounded_x, rounded_y)
+    def add_point_set2(self, x: float, y: float) -> bool:
+        point = (round(x, 3), round(y, 3))
+        if point not in self.set1:
+            self.set2.add(point)
+            self.table_set2.insert_point(point[0], point[1])
 
     def __get_point_from_input_fields(self) -> None:
         try:
