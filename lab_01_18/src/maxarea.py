@@ -1,15 +1,11 @@
 import math
 from itertools import combinations
 from src.cicle import Cicle, QPointF
-from PyQt6.QtGui import QVector2D, QTransform
-
-def points_distance(point1: QPointF, point2: QPointF) -> float:
-    diff = point1 - point2
-    return math.hypot(diff.x(), diff.y())
+from PyQt6.QtGui import QVector2D
 
 def trapezoid_area(cicle1: Cicle, cicle2: Cicle) -> float:
 
-    distance = points_distance(cicle1.center(), cicle2.center())
+    distance = cicle1.centers_distance(cicle2)
     tangent_len = math.hypot(distance, cicle1.radius() - cicle2.radius())
 
     return (cicle1.radius() + cicle2.radius()) * tangent_len / 2
@@ -47,7 +43,7 @@ def find_rotate_angle(cicle1: Cicle, cicle2: Cicle) -> float:
 
     small_center, big_center = small.center(), big.center()
 
-    distance = points_distance(small_center, big_center)
+    distance = small.centers_distance(big)
     distance_x = math.fabs(small_center.x() - big_center.x())
 
     sigma = math.asin((big.radius() - small.radius()) / distance)
