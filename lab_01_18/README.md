@@ -6,3 +6,16 @@
 
 ![Alt text for the image](lab1.jpeg)
 
+# How to use
+
+### Чтобы запустить программу, введите:
+```bash
+    cd ./lab_01_18
+    python3 ./main.py
+```
+
+### Чтобы запустить unit-тесты, введите:
+```bash
+    cd ./lab_01_18
+    ./test.sh
+```

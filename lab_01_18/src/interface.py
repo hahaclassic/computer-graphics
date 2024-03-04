@@ -8,7 +8,7 @@ import pyqtgraph as pg
 
 import math
 import src.maxarea as maxarea
-from src.cicle import Cicle
+from src.circle import Circle
 
 MANUAL_PATH = "./src/app_messages/manual.txt"
 TASK_PATH = "./src/app_messages/task.txt"
@@ -37,6 +37,7 @@ class MenuBar(QMenuBar):
         self.export_set1 = QAction("Экспортировать множество точек А", parent)
         self.import_set2 = QAction("Импортировать множество точек B", parent)
         self.export_set2 = QAction("Экспортировать множество точек B", parent)
+        self.export_result = QAction("Экспортировать результат поиска", parent)
 
         self.task_condition = QAction("Условие", parent)
         self.manual = QAction("Инструкция", parent)
@@ -45,6 +46,7 @@ class MenuBar(QMenuBar):
         self.export_set1.triggered.connect(parent.save_set1)
         self.import_set2.triggered.connect(parent.load_set2)
         self.export_set2.triggered.connect(parent.save_set2)
+        self.export_result.triggered.connect(parent.save_result)
         self.manual.triggered.connect(parent.show_manual)
         self.task_condition.triggered.connect(parent.show_task)
 
@@ -52,6 +54,7 @@ class MenuBar(QMenuBar):
         self.file_actions.addAction(self.export_set1)
         self.file_actions.addAction(self.import_set2)
         self.file_actions.addAction(self.export_set2)
+        self.file_actions.addAction(self.export_result)
         self.addMenu(self.file_actions)
         self.addAction(self.task_condition)
         self.addAction(self.manual)
@@ -166,12 +169,12 @@ class Canvas(pg.PlotWidget):
         self.addItem(line)
         self.getViewBox().autoRange()
 
-    def plot_cicle(self, cicle: Cicle, color: str) -> None:
-        center, r = cicle.center(), cicle.radius()
+    def plot_circle(self, circle: Circle, color: str) -> None:
+        center, r = circle.center(), circle.radius()
         x1,y1 = center.x() - r, center.y() - r
-        cicle1 = pg.CircleROI(pen=color, pos=(x1,y1), radius=r)
+        circle1 = pg.CircleROI(pen=color, pos=(x1,y1), radius=r)
 
-        self.addItem(cicle1)
+        self.addItem(circle1)
         self.getViewBox().autoRange()
 
 class MainWindow(QMainWindow):
@@ -310,19 +313,19 @@ class MainWindow(QMainWindow):
 
     def __calcucate_and_show_result(self) -> None:
     
-        max_area, cicle1, cicle2 = maxarea.find_max_area(self.set1, self.set2)
+        max_area, circle1, circle2 = maxarea.find_max_area(self.set1, self.set2)
         if max_area == -math.inf:
             self.output_field.setText("Невозможно получить ответ.")
             return
 
-        tangent_p1, tangent_p2 = maxarea.tangent_coordinates(cicle1, cicle2)
+        tangent_p1, tangent_p2 = maxarea.tangent_coordinates(circle1, circle2)
 
         self.output_field.setText(
-            f"Smax = {max_area:.3f}\ncicle1: {cicle1}\ncicle2: {cicle2}")
+            f"Smax = {max_area:.3f}\ncircle1: {circle1}\ncircle2: {circle2}")
 
-        self.__plot_result_figure(cicle1, cicle2, tangent_p1, tangent_p2)
+        self.__plot_result_figure(circle1, circle2, tangent_p1, tangent_p2)
 
-    def __plot_result_figure(self, cicle1: Cicle, cicle2: Cicle, \
+    def __plot_result_figure(self, circle1: Circle, circle2: Circle, \
         tangent_p1: QPointF, tangent_p2: QPointF):
 
         self.canvas.clear()
@@ -330,14 +333,14 @@ class MainWindow(QMainWindow):
         self.canvas.plot_points_auto_range(self.set2, 'b')
 
         self.canvas.plot_line(tangent_p1, tangent_p2, 'g')
-        self.canvas.plot_line(cicle1.center(), cicle2.center(), 'g')
+        self.canvas.plot_line(circle1.center(), circle2.center(), 'g')
 
-        self.canvas.plot_line(tangent_p1, cicle1.center(), 'g')
-        self.canvas.plot_line(tangent_p2, cicle2.center(), 'g')
+        self.canvas.plot_line(tangent_p1, circle1.center(), 'g')
+        self.canvas.plot_line(tangent_p2, circle2.center(), 'g')
         
-        self.canvas.plot_cicle(cicle1, 'g')
-        self.canvas.plot_cicle(cicle2, 'g')
-        self.canvas.plot_points_auto_range([cicle1.center(), cicle2.center(), tangent_p1, tangent_p2], 'w')
+        self.canvas.plot_circle(circle1, 'g')
+        self.canvas.plot_circle(circle2, 'g')
+        self.canvas.plot_points_auto_range([circle1.center(), circle2.center(), tangent_p1, tangent_p2], 'w')
 
     def point_idx_set1(self, point: QPointF) -> int:
         for i, current in enumerate(self.set1):
@@ -449,17 +452,35 @@ class MainWindow(QMainWindow):
         self.__save_points(self.set2)
 
     def __save_points(self, points: list[QPointF]) -> None:
+        if len(points) == 0:
+            self.show_error_message("Ошибка", "Множество пусто.")
+            return
+        
         file_name, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "")
         if file_name == "":
             return
-
+        
         try:
-            file = open(file_name, "w")
-            for point in points:
-                file.write(f"{point.x()} {point.y()}\n")
-            file.close()
+            with open(file_name, "w") as file:
+                for point in points:
+                    file.write(f"{point.x()} {point.y()}\n")
         except:
             self.show_error_message("Ошибка записи", "Произошла ошибка во время записи данных в файл")
+
+    def save_result(self) -> None:
+        if self.output_field.text() == "":
+            self.show_error_message("Ошибка", "Нет результирующих данных.")
+            return
+    
+        file_name, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "")
+        if file_name == "":
+            return
+        
+        try:
+            with open(file_name, "w") as file:
+                file.write(self.output_field.text())
+        except:
+            self.show_error_message("Ошибка записи", "Произошла ошибка во время записи данных в файл.")
 
     def show_manual(self) -> None:
         if self.manualWidget.isVisible():

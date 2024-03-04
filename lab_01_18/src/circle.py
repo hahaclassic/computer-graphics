@@ -1,7 +1,7 @@
 import math
 from PyQt6.QtCore import QPointF
 
-class Cicle: 
+class Circle: 
     def __init__(self, point1: QPointF, point2: QPointF, point3: QPointF) -> None:
 
         self.__is_valid = True
@@ -12,7 +12,7 @@ class Cicle:
             self.__center = self.__find_center(point1, point2, point3)
             self.__radius = self.__find_radius()
         except:
-            self.__center, self.__radius = (0,0), 0
+            self.__center, self.__radius = QPointF(0,0), 0
             self.__is_valid = False
 
     def __find_center(self, p1: QPointF, p2: QPointF, p3: QPointF) -> QPointF:
@@ -38,8 +38,10 @@ class Cicle:
         return f"center = ({self.__center.x():.3f}, {self.__center.y():.3f}), R = {self.__radius:.3f}"
     
     def centers_distance(self, other) -> float:
-        diff = self.__center - other.__center
-        return math.hypot(diff.x(), diff.y())
+        if isinstance(other, Circle):
+            diff = self.__center - other.__center
+            return math.hypot(diff.x(), diff.y())
+        return -1
 
     def is_valid(self) -> bool:
         return self.__is_valid

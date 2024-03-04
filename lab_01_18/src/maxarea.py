@@ -1,43 +1,46 @@
 import math
 from itertools import combinations
-from src.cicle import Cicle, QPointF
 from PyQt6.QtGui import QVector2D
 
-def trapezoid_area(cicle1: Cicle, cicle2: Cicle) -> float:
+import sys
+sys.path.append('./src/')
+from src.circle import Circle, QPointF
 
-    distance = cicle1.centers_distance(cicle2)
-    tangent_len = math.hypot(distance, cicle1.radius() - cicle2.radius())
+def trapezoid_area(circle1: Circle, circle2: Circle) -> float:
 
-    return (cicle1.radius() + cicle2.radius()) * tangent_len / 2
+    distance = circle1.centers_distance(circle2)
+    tangent_len = math.hypot(distance, circle1.radius() - circle2.radius())
+
+    return (circle1.radius() + circle2.radius()) * tangent_len / 2
 
 
-def find_max_area(set1: list[QPointF], set2: list[QPointF]) -> tuple[float, Cicle, Cicle]:
-    max_s1_cicle, max_s2_cicle = None, None
+def find_max_area(set1: list[QPointF], set2: list[QPointF]) -> tuple[float, Circle, Circle]:
+    max_s1_circle, max_s2_circle = None, None
     max_area = -math.inf
 
     for s1_point1, s1_point2, s1_point3 in combinations(set1, 3):
 
-        s1_cicle = Cicle(s1_point1, s1_point2, s1_point3)
-        if not s1_cicle.is_valid():
+        s1_circle = Circle(s1_point1, s1_point2, s1_point3)
+        if not s1_circle.is_valid():
             continue
 
         for s2_point1, s2_point2, s2_point3 in combinations(set2, 3):
 
-            s2_cicle = Cicle(s2_point1, s2_point2, s2_point3)
-            if not s2_cicle.is_valid() or \
-                s2_cicle.centers_distance(s1_cicle) <= math.fabs(s1_cicle.radius() - s2_cicle.radius()):
+            s2_circle = Circle(s2_point1, s2_point2, s2_point3)
+            if not s2_circle.is_valid() or \
+                s2_circle.centers_distance(s1_circle) <= math.fabs(s1_circle.radius() - s2_circle.radius()):
                 continue
 
-            curr_area = trapezoid_area(s1_cicle, s2_cicle)
+            curr_area = trapezoid_area(s1_circle, s2_circle)
             if curr_area > max_area:
-                max_s1_cicle, max_s2_cicle = s1_cicle, s2_cicle
+                max_s1_circle, max_s2_circle = s1_circle, s2_circle
                 max_area = curr_area
 
-    return max_area, max_s1_cicle, max_s2_cicle
+    return max_area, max_s1_circle, max_s2_circle
 
 
-def find_rotate_angle(cicle1: Cicle, cicle2: Cicle) -> float:
-    small, big = cicle1, cicle2
+def find_rotate_angle(circle1: Circle, circle2: Circle) -> float:
+    small, big = circle1, circle2
     if small.radius() > big.radius():
         small, big = big, small
 
@@ -68,13 +71,13 @@ def rotate_vector(vector: QVector2D, angle: float) -> None:
     vector.setX(x)
     vector.setY(y)
 
-def tangent_coordinates(cicle1: Cicle, cicle2: Cicle) -> tuple[QPointF, QPointF]:
-    alpha = find_rotate_angle(cicle1, cicle2)
-    center1, center2 = cicle1.center(), cicle2.center()
+def tangent_coordinates(circle1: Circle, circle2: Circle) -> tuple[QPointF, QPointF]:
+    alpha = find_rotate_angle(circle1, circle2)
+    center1, center2 = circle1.center(), circle2.center()
 
     # The upper points of the circles
-    top_point1 = QPointF(center1.x(), center1.y() + cicle1.radius())
-    top_point2 = QPointF(center2.x(), center2.y() + cicle2.radius())
+    top_point1 = QPointF(center1.x(), center1.y() + circle1.radius())
+    top_point2 = QPointF(center2.x(), center2.y() + circle2.radius())
 
     radius_vector1 = QVector2D(top_point1 - center1)
     radius_vector2 = QVector2D(top_point2 - center2)
