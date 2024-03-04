@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QWidget, QMainWindow, QPushButton, \
     QAbstractItemView, QGridLayout, QTextEdit, QLabel, QMenu, QMenuBar, \
-    QFileDialog, QTableWidget, QTableWidgetItem, QCheckBox,QMessageBox, \
+    QFileDialog, QTableWidget, QTableWidgetItem, QCheckBox, QMessageBox, \
     QScrollArea, QVBoxLayout
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt, QSize, QPointF
@@ -57,8 +57,9 @@ class MenuBar(QMenuBar):
         self.addAction(self.manual)
         
 class PointsTable(QTableWidget):
-    def __init__(self, parent: QMainWindow) -> None:
+    def __init__(self, parent: QMainWindow, setIdx: int) -> None:
         super().__init__(parent)
+        self.setIdx = setIdx 
         self.main_window = parent
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -73,15 +74,6 @@ class PointsTable(QTableWidget):
         self.setItem(self.rowCount() - 1, 0, QTableWidgetItem(f"{point.x():.3f}"))
         self.setItem(self.rowCount() - 1, 1, QTableWidgetItem(f"{point.y():.3f}"))
 
-    # TODO: Вынести 1e-07 в глобальные константы как eps
-    def delete_point(self, point: QPointF) -> None:
-        n = self.rowCount()
-        for i in range(n):
-            if math.fabs(float(self.item(i, 0).text()) - point.x()) < 1e-07 \
-                and math.fabs(float(self.item(i, 1).text()) - point.y()) < 1e-07:
-                self.removeRow(i)
-                break
-
     # TODO: Переделать, убрать обращение к полям родительского виджета.
     # TODO: (optional) отмечать выбранную точку, чтобы пользователь понимал,
     # какая точка в данный момент выбрана.
@@ -89,34 +81,30 @@ class PointsTable(QTableWidget):
         index = self.indexAt(event.pos())
         if not index.isValid():
             return
-    
+        
         row = index.row()
         reply = QMessageBox.question(self, 'Удалить точку?',
             f'Удалить точку №{row + 1}?', 
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         
         if reply == QMessageBox.StandardButton.Yes:
-            x, y = float(self.item(row, 0).text()), float(self.item(row, 1).text())
-            if (x,y) in self.main_window.set1:
-                self.main_window.delete_point_set1(x,y)
-                self.main_window.canvas.clear()
-                self.main_window.canvas.plot_points(self.main_window.set1, 'r')
-                self.main_window.canvas.plot_points(self.main_window.set2, 'b')
-            else:
-                self.main_window.delete_point_set2(x,y)
-                self.main_window.canvas.clear()
-                self.main_window.canvas.plot_points(self.main_window.set1, 'r')
-                self.main_window.canvas.plot_points(self.main_window.set2, 'b')
+            if self.setIdx == 1:
+                self.main_window.set1.pop(row)
+            elif self.setIdx == 2: 
+                self.main_window.set2.pop(row)
+            self.main_window.canvas.clear()
+            self.main_window.canvas.plot_points(self.main_window.set1, 'r')
+            self.main_window.canvas.plot_points(self.main_window.set2, 'b')
             self.removeRow(row)
-
+            
         super().contextMenuEvent(event)
 
 class Canvas(pg.PlotWidget):
     def __init__(self, parent: QMainWindow) -> None:
         super().__init__(parent)
         self.showGrid(x=True, y=True)
-        self.setXRange(0, 10)
-        self.setYRange(0,10)
+        self.setXRange(0, 12)
+        self.setYRange(0,12)
         self.setAspectLocked()
         self.parent = parent
         self.setMinimumSize(QSize(400,400))
@@ -124,6 +112,9 @@ class Canvas(pg.PlotWidget):
     def mousePressEvent(self, ev) -> None:
         if ev.button() == Qt.MouseButton.MiddleButton:
             return super().mousePressEvent(ev)
+        elif ev.button() == Qt.MouseButton.LeftButton and \
+            ev.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            return self.delete_point(ev.pos())
 
         grid_pos = self.getViewBox().mapSceneToView(QPointF(ev.pos()))
         point = QPointF(grid_pos.x(), grid_pos.y())
@@ -134,6 +125,27 @@ class Canvas(pg.PlotWidget):
         elif ev.button() == Qt.MouseButton.RightButton:
             self.plot_point(point, 'b')
             self.parent.add_point_set2(point)
+        
+    def delete_point(self, pos) -> None:
+        isExist = False
+        pass
+        for x_start in range(pos.x() - 10, pos.x() + 10):
+            for y_start in range(pos.y() - 10, pos.y() + 10):
+                grid_pos = self.getViewBox().mapSceneToView(QPointF(x_start, y_start))
+                point = QPointF(grid_pos.x(), grid_pos.y())
+                if self.parent.delete_point_set1(point):
+                    self.parent.delete_point_set1_from_table(point)
+                    isExist = True
+                    break
+                if self.parent.delete_point_set2(point):
+                    self.parent.delete_point_set2_from_table(point)
+                    isExist = True
+                    break
+            if isExist:
+                self.clear()
+                self.plot_points(self.parent.set1, 'r')
+                self.plot_points(self.parent.set2, 'b')
+                break
 
     def plot_point(self, point: QPointF, color: str) -> None:
         scatter = pg.ScatterPlotItem(pen=color, x=[point.x()], y=[point.y()], brush=color, symbol='o')
@@ -212,8 +224,8 @@ class MainWindow(QMainWindow):
         self.output_field = QLabel(self)
     
         # Create point tables
-        self.table_set1 = PointsTable(self)
-        self.table_set2 = PointsTable(self)
+        self.table_set1 = PointsTable(self, 1)
+        self.table_set2 = PointsTable(self, 2)
 
         # Create buttons
         self.button_calc = QPushButton('Найти решение', self)
@@ -386,21 +398,29 @@ class MainWindow(QMainWindow):
         self.input_field_x.clear()
         self.input_field_y.clear()
 
-    def delete_point_set1(self, point: QPointF) -> None:
-        idx = self.is_point_in_set1(point)
+    def delete_point_set1(self, point: QPointF) -> bool:
+        idx = self.point_idx_set1(point)
         if idx != -1:
             self.set1.pop(idx)
+            return True
+        return False
 
     def delete_point_set1_from_table(self, point: QPointF) -> None:
-        self.table_set1.delete_point(point)
+        idx = self.point_idx_set1(point)
+        if idx != -1:
+            self.table_set1.removeRow(idx)
 
-    def delete_point_set2(self, point: QPointF) -> None:
-        idx = self.is_point_in_set2(point)
+    def delete_point_set2(self, point: QPointF) -> bool:
+        idx = self.point_idx_set2(point)
         if idx != -1:
             self.set2.pop(idx)
+            return True
+        return False
 
     def delete_point_set2_from_table(self, point: QPointF) -> None:
-        self.table_set1.delete_point(point)
+        idx = self.point_idx_set2(point)
+        if idx != -1:
+            self.table_set2.removeRow(idx)
 
     def load_set1(self) -> None:
         points = self.__load_data()
@@ -490,6 +510,8 @@ class MainWindow(QMainWindow):
 
     def clear_all(self) -> None:
         self.canvas.clear()
+        self.canvas.setXRange(0, 12)
+        self.canvas.setYRange(0,12)
         self.clear_set1()
         self.clear_set2()
 
