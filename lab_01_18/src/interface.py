@@ -8,7 +8,7 @@ import pyqtgraph as pg
 
 import math
 import src.maxarea as maxarea
-import src.objects as obj
+from src.cicle import Cicle
 
 MANUAL_PATH = "./src/app_messages/manual.txt"
 TASK_PATH = "./src/app_messages/task.txt"
@@ -68,17 +68,17 @@ class PointsTable(QTableWidget):
         self.setFixedWidth(200)
         self.setMinimumHeight(200)
     
-    def insert_point(self, x: float, y: float) -> None:
+    def insert_point(self, point: QPointF) -> None:
         self.insertRow(self.rowCount())
-        self.setItem(self.rowCount() - 1, 0, QTableWidgetItem(str(x)))
-        self.setItem(self.rowCount() - 1, 1, QTableWidgetItem(str(y)))
+        self.setItem(self.rowCount() - 1, 0, QTableWidgetItem(f"{point.x():.3f}"))
+        self.setItem(self.rowCount() - 1, 1, QTableWidgetItem(f"{point.y():.3f}"))
 
     # TODO: Вынести 1e-07 в глобальные константы как eps
-    def delete_point(self, x: float, y: float) -> None:
+    def delete_point(self, point: QPointF) -> None:
         n = self.rowCount()
         for i in range(n):
-            if math.fabs(float(self.item(i, 0).text()) - x) < 1e-07 \
-                and math.fabs(float(self.item(i, 1).text()) - y) < 1e-07:
+            if math.fabs(float(self.item(i, 0).text()) - point.x()) < 1e-07 \
+                and math.fabs(float(self.item(i, 1).text()) - point.y()) < 1e-07:
                 self.removeRow(i)
                 break
 
@@ -124,70 +124,42 @@ class Canvas(pg.PlotWidget):
     def mousePressEvent(self, ev) -> None:
         if ev.button() == Qt.MouseButton.MiddleButton:
             return super().mousePressEvent(ev)
-        elif ev.button() == Qt.MouseButton.LeftButton and \
-            ev.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            return self.delete_point(ev.pos())
 
         grid_pos = self.getViewBox().mapSceneToView(QPointF(ev.pos()))
-        x, y = round(grid_pos.x(), 3), round(grid_pos.y(), 3)
+        point = QPointF(grid_pos.x(), grid_pos.y())
     
         if ev.button() == Qt.MouseButton.LeftButton:
-            self.plot_point(x, y, 'r')
-            self.parent.add_point_set1(x, y)
+            self.plot_point(point, 'r')
+            self.parent.add_point_set1(point)
         elif ev.button() == Qt.MouseButton.RightButton:
-            self.plot_point(x, y, 'b')
-            self.parent.add_point_set2(x, y)
+            self.plot_point(point, 'b')
+            self.parent.add_point_set2(point)
 
-    def plot_point(self, x: float, y: float, color: str) -> None:
-        scatter = pg.ScatterPlotItem(pen=color, x=[x], y=[y], brush=color, symbol='o')
+    def plot_point(self, point: QPointF, color: str) -> None:
+        scatter = pg.ScatterPlotItem(pen=color, x=[point.x()], y=[point.y()], brush=color, symbol='o')
         self.addItem(scatter)
  
-    def plot_points(self, points: set, color: str) -> None:
-        x = list(map(lambda point: point[0], points))
-        y = list(map(lambda point: point[1], points))
+    def plot_points(self, points: list[QPointF], color: str) -> None:
+        x = list(map(lambda point: point.x(), points))
+        y = list(map(lambda point: point.y(), points))
         scatter = pg.ScatterPlotItem(pen=color, x=x, y=y, brush=color, symbol='o')
         self.addItem(scatter)
         
-    def plot_points_auto_range(self, points: set, color: str) -> None:
+    def plot_points_auto_range(self, points: list[QPointF], color: str) -> None:
         self.plot_points(points, color)
         self.getViewBox().autoRange()
 
-    # Переделать, убрать обращение к полям родительского виджета.
-    def delete_point(self, pos) -> None:
-        isExist = False
-
-        for x_start in range(pos.x() - 10, pos.x() + 10):
-            for y_start in range(pos.y() - 10, pos.y() + 10):
-                grid_pos = self.getViewBox().mapSceneToView(QPointF(x_start, y_start))
-                x, y = round(grid_pos.x(), 3), round(grid_pos.y(), 3)
-
-                if (x,y) in self.parent.set1:
-                    isExist = True
-                    self.parent.delete_point_set1(x, y)
-                    self.parent.delete_point_set1_from_table(x,y)
-                    break
-                elif (x,y) in self.parent.set2:
-                    isExist = True
-                    self.parent.delete_point_set2(x,y)
-                    self.parent.delete_point_set2_from_table(x,y)
-                    break
-            if isExist:
-                self.clear()
-                self.plot_points(self.parent.set1, 'r')
-                self.plot_points(self.parent.set2, 'b')
-                break
-
-    def plot_line(self, start: tuple[float, float], end: tuple[float, float], color) -> None:
-        x = [start[0], end[0]]
-        y = [start[1], end[1]]
+    def plot_line(self, start: QPointF, end: QPointF, color) -> None:
+        x = [start.x(), end.x()]
+        y = [start.y(), end.y()]
 
         line = pg.PlotDataItem(pen=color, x=x, y=y, brush=color)
         self.addItem(line)
         self.getViewBox().autoRange()
 
-    def plot_cicle(self, cicle: obj.Cicle, color: str) -> None:
+    def plot_cicle(self, cicle: Cicle, color: str) -> None:
         center, r = cicle.center(), cicle.radius()
-        x1,y1 = center[0] - r, center[1] - r
+        x1,y1 = center.x() - r, center.y() - r
         cicle1 = pg.CircleROI(pen=color, pos=(x1,y1), radius=r)
 
         self.addItem(cicle1)
@@ -198,8 +170,8 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         ### Points
-        self.set1 = set()
-        self.set2 = set()
+        self.set1: list[QPointF] = []
+        self.set2: list[QPointF] = []
 
         self.setWindowTitle('Лабораторная работа №1')
         self.setMinimumSize(920,550)
@@ -341,7 +313,9 @@ class MainWindow(QMainWindow):
 
         self.__plot_result_figure(cicle1, cicle2, tangent_p1, tangent_p2)
 
-    def __plot_result_figure(self, cicle1: obj.Cicle, cicle2: obj.Cicle, tangent_p1, tangent_p2):
+    def __plot_result_figure(self, cicle1: Cicle, cicle2: Cicle, \
+        tangent_p1: QPointF, tangent_p2: QPointF):
+
         self.canvas.clear()
         self.canvas.plot_points_auto_range(self.set1, 'r')
         self.canvas.plot_points_auto_range(self.set2, 'b')
@@ -354,62 +328,86 @@ class MainWindow(QMainWindow):
         
         self.canvas.plot_cicle(cicle1, 'g')
         self.canvas.plot_cicle(cicle2, 'g')
-        self.canvas.plot_points_auto_range(set([cicle1.center(), cicle2.center(), tangent_p1, tangent_p2]), 'w')
+        self.canvas.plot_points_auto_range([cicle1.center(), cicle2.center(), tangent_p1, tangent_p2], 'w')
 
-    def add_point_set1(self, x: float, y: float) -> bool:
-        point = (round(x, 3), round(y, 3))
-        if point not in self.set1:
-            self.set1.add(point)
-            self.table_set1.insert_point(point[0], point[1])
+    def point_idx_set1(self, point: QPointF) -> int:
+        for i, current in enumerate(self.set1):
+            if point == current:
+                return i
+        return -1
+    
+    def point_idx_set2(self, point: QPointF) -> int:
+        for i, current in enumerate(self.set2):
+            if point == current:
+                return i
+        return -1
 
-    def add_point_set2(self, x: float, y: float) -> bool:
-        point = (round(x, 3), round(y, 3))
-        if point not in self.set1:
-            self.set2.add(point)
-            self.table_set2.insert_point(point[0], point[1])
+    def add_point_set1(self, point: QPointF) -> bool:
+        # Returns True if the point was successfully added
+        idx = self.point_idx_set1(point)
+        if idx == -1:
+            self.set1.append(point)
+            self.table_set1.insert_point(point)
+            return True
+        return False
+
+    def add_point_set2(self, point: QPointF) -> bool:
+        # Returns True if the point was successfully added
+        idx = self.point_idx_set2(point)
+        if idx == -1:
+            self.set2.append(point)
+            self.table_set2.insert_point(point)
+            return True
+        return False
 
     def __get_point_from_input_fields(self) -> None:
         try:
             x = float(self.input_field_x.toPlainText())
             y = float(self.input_field_y.toPlainText())
         except:
-            self.show_error_message("Некорректные данные", 
-                "В полях ввода указаны некорректные данные")
+            self.show_error_message("Некорректные данные", "В полях ввода указаны некорректные данные")
             return
 
+        ok = True
+        point = QPointF(x,y)
         if self.check_box_set1.checkState() == Qt.CheckState.Checked:
-            self.add_point_set1(x,y)
-            self.canvas.plot_point(round(x, 3), round(y, 3), 'r')
+            ok = self.add_point_set1(point)
+            if ok:
+                self.canvas.plot_point(point, 'r')
         else:
-            self.add_point_set2(x,y)
-            self.canvas.plot_point(round(x, 3), round(y, 3), 'b')
-        self.canvas.getViewBox().autoRange()
+            ok = self.add_point_set2(point)
+            if ok:
+                self.canvas.plot_point(point, 'b')
 
+        if not ok:
+            self.show_error_message("Ошибка", "Данная точка уже существует")
+        
+        self.canvas.getViewBox().autoRange()
         self.input_field_x.clear()
         self.input_field_y.clear()
 
-    def delete_point_set1(self, x: float, y: float) -> None:
-        rounded_x, rounded_y = round(x, 3), round(y, 3) 
-        self.set1.remove((rounded_x, rounded_y))
+    def delete_point_set1(self, point: QPointF) -> None:
+        idx = self.is_point_in_set1(point)
+        if idx != -1:
+            self.set1.pop(idx)
 
-    def delete_point_set1_from_table(self, x: float, y: float) -> None:
-        rounded_x, rounded_y = round(x, 3), round(y, 3) 
-        self.table_set1.delete_point(rounded_x, rounded_y)
+    def delete_point_set1_from_table(self, point: QPointF) -> None:
+        self.table_set1.delete_point(point)
 
-    def delete_point_set2(self, x: float, y: float) -> None:
-        rounded_x, rounded_y = round(x, 3), round(y, 3) 
-        self.set2.remove((rounded_x, rounded_y))
+    def delete_point_set2(self, point: QPointF) -> None:
+        idx = self.is_point_in_set2(point)
+        if idx != -1:
+            self.set2.pop(idx)
 
-    def delete_point_set2_from_table(self, x: float, y: float) -> None:
-        rounded_x, rounded_y = round(x, 3), round(y, 3) 
-        self.table_set2.delete_point(rounded_x, rounded_y)
+    def delete_point_set2_from_table(self, point: QPointF) -> None:
+        self.table_set1.delete_point(point)
 
     def load_set1(self) -> None:
         points = self.__load_data()
         self.clear_set1()
 
         for i in range(0, len(points) - 1, 2):
-            self.add_point_set1(points[i], points[i + 1])
+            self.add_point_set1(QPointF(points[i], points[i + 1]))
 
         self.canvas.clear()
         self.canvas.plot_points_auto_range(self.set1, 'r')
@@ -420,7 +418,7 @@ class MainWindow(QMainWindow):
         self.clear_set2()
 
         for i in range(0, len(points) - 1, 2):
-            self.add_point_set2(points[i], points[i + 1])
+            self.add_point_set2(QPointF(points[i], points[i + 1]))
 
         self.canvas.clear()
         self.canvas.plot_points_auto_range(self.set1, 'r')
@@ -449,7 +447,7 @@ class MainWindow(QMainWindow):
     def save_set2(self) -> None:
         self.__save_points(self.set2)
 
-    def __save_points(self, points: set) -> None:
+    def __save_points(self, points: list[QPointF]) -> None:
         file_name, _ = QFileDialog.getSaveFileName(self, "Сохранить файл", "")
         if file_name == "":
             return
@@ -457,7 +455,7 @@ class MainWindow(QMainWindow):
         try:
             file = open(file_name, "w")
             for point in points:
-                file.write(f"{point[0]} {point[1]}\n")
+                file.write(f"{point.x()} {point.y()}\n")
             file.close()
         except:
             self.show_error_message("Ошибка записи", "Произошла ошибка во время записи данных в файл")
@@ -497,4 +495,3 @@ class MainWindow(QMainWindow):
 
     def show_error_message(self, title: str, message: str) -> None:
         QMessageBox.warning(self, title, message)
-        

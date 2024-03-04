@@ -1,18 +1,21 @@
 import math
 from itertools import combinations
-from src.objects import Cicle, Vector2D
+from src.cicle import Cicle, QPointF
+from PyQt6.QtGui import QVector2D, QTransform
 
-### TODO: Переписать через классы qt
+def points_distance(point1: QPointF, point2: QPointF) -> float:
+    diff = point1 - point2
+    return math.hypot(diff.x(), diff.y())
 
 def trapezoid_area(cicle1: Cicle, cicle2: Cicle) -> float:
 
-    distance = math.dist(cicle1.center(), cicle2.center())
+    distance = points_distance(cicle1.center(), cicle2.center())
     tangent_len = math.hypot(distance, cicle1.radius() - cicle2.radius())
 
     return (cicle1.radius() + cicle2.radius()) * tangent_len / 2
 
 
-def find_max_area(set1: set, set2: set) -> tuple[float, Cicle, Cicle]:
+def find_max_area(set1: list[QPointF], set2: list[QPointF]) -> tuple[float, Cicle, Cicle]:
     max_s1_cicle, max_s2_cicle = None, None
     max_area = -math.inf
 
@@ -44,36 +47,47 @@ def find_rotate_angle(cicle1: Cicle, cicle2: Cicle) -> float:
 
     small_center, big_center = small.center(), big.center()
 
-    distance = math.dist(small_center, big_center)
-    distance_x = math.fabs(small_center[0] - big_center[0])
+    distance = points_distance(small_center, big_center)
+    distance_x = math.fabs(small_center.x() - big_center.x())
 
     sigma = math.asin((big.radius() - small.radius()) / distance)
     beta = math.acos(distance_x / distance)
 
-    if small_center[1] > big_center[1]:
+    if small_center.y() > big_center.y():
         alpha = beta - sigma  # If the small circle is located above the big one
     else:
         alpha = beta + sigma
     
     # If a small circle is 2 or 4 quarters of a relatively big one
-    if small_center[1] > big_center[1] and small_center[0] < big_center[0] \
-        or small_center[1] < big_center[1] and small_center[0] > big_center[0]:
+    if small_center.y() > big_center.y() and small_center.x() < big_center.x() \
+        or small_center.y() < big_center.y() and small_center.x() > big_center.x():
         alpha *= -1
 
     return alpha
 
-def tangent_coordinates(cicle1: Cicle, cicle2: Cicle) -> tuple[tuple[float, float], tuple[float, float]]:
+
+def rotate_vector(vector: QVector2D, angle: float) -> None:
+  
+    x = math.cos(angle) * vector.x() - math.sin(angle) * vector.y()
+    y = math.sin(angle) * vector.x() + math.cos(angle) * vector.y()
+    vector.setX(x)
+    vector.setY(y)
+
+def tangent_coordinates(cicle1: Cicle, cicle2: Cicle) -> tuple[QPointF, QPointF]:
     alpha = find_rotate_angle(cicle1, cicle2)
     center1, center2 = cicle1.center(), cicle2.center()
 
     # The upper points of the circles
-    top_point1 = (center1[0], center1[1] + cicle1.radius())
-    top_point2 = (center2[0], center2[1] + cicle2.radius())
+    top_point1 = QPointF(center1.x(), center1.y() + cicle1.radius())
+    top_point2 = QPointF(center2.x(), center2.y() + cicle2.radius())
 
-    radius_vector1 = Vector2D(center1, top_point1)
-    radius_vector2 = Vector2D(center2, top_point2)
+    radius_vector1 = QVector2D(top_point1 - center1)
+    radius_vector2 = QVector2D(top_point2 - center2)
 
-    radius_vector1.rotate(alpha)
-    radius_vector2.rotate(alpha)
+    rotate_vector(radius_vector1, alpha)
+    rotate_vector(radius_vector2, alpha)
     
-    return radius_vector1.end(), radius_vector2.end()
+    tangent_p1 = radius_vector1.toPointF() + center1
+    tangent_p2 = radius_vector2.toPointF() + center2
+    
+    return tangent_p1, tangent_p2
