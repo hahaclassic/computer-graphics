@@ -1,9 +1,6 @@
 import math
 from itertools import combinations
 from PyQt6.QtGui import QVector2D
-
-import sys
-sys.path.append('./src/')
 from src.circle import Circle, QPointF
 
 def trapezoid_area(circle1: Circle, circle2: Circle) -> float:
