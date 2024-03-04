@@ -1,8 +1,9 @@
-import internal.interface.interface as interface
+from PyQt6.QtWidgets import QApplication
+import src.interface as interface
 import sys
 
-app = interface.QApplication(sys.argv)
+app = QApplication(sys.argv)
 window = interface.MainWindow()
 window.show()
 
-app.exec()
+sys.exit(app.exec())
