@@ -74,9 +74,6 @@ class PointsTable(QTableWidget):
         self.setItem(self.rowCount() - 1, 0, QTableWidgetItem(f"{point.x():.3f}"))
         self.setItem(self.rowCount() - 1, 1, QTableWidgetItem(f"{point.y():.3f}"))
 
-    # TODO: Переделать, убрать обращение к полям родительского виджета.
-    # TODO: (optional) отмечать выбранную точку, чтобы пользователь понимал,
-    # какая точка в данный момент выбрана.
     def contextMenuEvent(self, event) -> None:
         index = self.indexAt(event.pos())
         if not index.isValid():
@@ -89,14 +86,12 @@ class PointsTable(QTableWidget):
         
         if reply == QMessageBox.StandardButton.Yes:
             if self.setIdx == 1:
-                self.main_window.set1.pop(row)
+                self.main_window.delete_point_set1(row)
             elif self.setIdx == 2: 
-                self.main_window.set2.pop(row)
+                self.main_window.delete_point_set2(row)
             self.main_window.canvas.clear()
             self.main_window.canvas.plot_points(self.main_window.set1, 'r')
             self.main_window.canvas.plot_points(self.main_window.set2, 'b')
-            self.removeRow(row)
-            
         super().contextMenuEvent(event)
 
 class Canvas(pg.PlotWidget):
@@ -128,17 +123,19 @@ class Canvas(pg.PlotWidget):
         
     def delete_point(self, pos) -> None:
         isExist = False
-        pass
         for x_start in range(pos.x() - 10, pos.x() + 10):
             for y_start in range(pos.y() - 10, pos.y() + 10):
                 grid_pos = self.getViewBox().mapSceneToView(QPointF(x_start, y_start))
-                point = QPointF(grid_pos.x(), grid_pos.y())
-                if self.parent.delete_point_set1(point):
-                    self.parent.delete_point_set1_from_table(point)
+
+                point_idx = self.parent.point_idx_set1(grid_pos)
+                if point_idx != -1:
+                    self.parent.delete_point_set1(point_idx)
                     isExist = True
                     break
-                if self.parent.delete_point_set2(point):
-                    self.parent.delete_point_set2_from_table(point)
+
+                point_idx = self.parent.point_idx_set2(grid_pos)
+                if point_idx != -1:
+                    self.parent.delete_point_set2(point_idx)
                     isExist = True
                     break
             if isExist:
@@ -398,29 +395,13 @@ class MainWindow(QMainWindow):
         self.input_field_x.clear()
         self.input_field_y.clear()
 
-    def delete_point_set1(self, point: QPointF) -> bool:
-        idx = self.point_idx_set1(point)
-        if idx != -1:
-            self.set1.pop(idx)
-            return True
-        return False
+    def delete_point_set1(self, point_idx: int) -> None:
+        self.set1.pop(point_idx)
+        self.table_set1.removeRow(point_idx)
 
-    def delete_point_set1_from_table(self, point: QPointF) -> None:
-        idx = self.point_idx_set1(point)
-        if idx != -1:
-            self.table_set1.removeRow(idx)
-
-    def delete_point_set2(self, point: QPointF) -> bool:
-        idx = self.point_idx_set2(point)
-        if idx != -1:
-            self.set2.pop(idx)
-            return True
-        return False
-
-    def delete_point_set2_from_table(self, point: QPointF) -> None:
-        idx = self.point_idx_set2(point)
-        if idx != -1:
-            self.table_set2.removeRow(idx)
+    def delete_point_set2(self, point_idx: int) -> None:
+        self.set2.pop(point_idx)
+        self.table_set2.removeRow(point_idx)
 
     def load_set1(self) -> None:
         points = self.__load_data()

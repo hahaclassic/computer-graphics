@@ -63,7 +63,6 @@ def find_rotate_angle(cicle1: Cicle, cicle2: Cicle) -> float:
 
 
 def rotate_vector(vector: QVector2D, angle: float) -> None:
-  
     x = math.cos(angle) * vector.x() - math.sin(angle) * vector.y()
     y = math.sin(angle) * vector.x() + math.cos(angle) * vector.y()
     vector.setX(x)
