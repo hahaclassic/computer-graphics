@@ -91,15 +91,13 @@ class Satellite:
         return satellite_items
 
     def __build_bottom_side_wall(self) -> list[QGraphicsLineItem, QGraphicsPolygonItem]:
-        center = self.center()
-        symmetry_vector = QVector2D(self.window_center - center)
-
-        bottom_solar_panel_p1 = self.__reflect_point(self.solar_panel_point1, center, symmetry_vector)
-        bottom_solar_panel_p2 = self.__reflect_point(self.solar_panel_point2, center, symmetry_vector)
-        bottom_solar_panel_p3 = self.__reflect_point(self.solar_panel_point3, center, symmetry_vector)
-        bottom_antenna_point = self.__reflect_point(self.top_antenna_point, center, symmetry_vector)
-        front_wall_bottom_point = self.__reflect_point(self.front_wall_top_point, center, symmetry_vector)
-        back_wall_bottom_point = self.__reflect_point(self.back_wall_top_point, center, symmetry_vector)
+        
+        bottom_solar_panel_p1 = self.__reflect_point(self.solar_panel_point1)
+        bottom_solar_panel_p2 = self.__reflect_point(self.solar_panel_point2)
+        bottom_solar_panel_p3 = self.__reflect_point(self.solar_panel_point3)
+        bottom_antenna_point = self.__reflect_point(self.top_antenna_point)
+        front_wall_bottom_point = self.__reflect_point(self.front_wall_top_point)
+        back_wall_bottom_point = self.__reflect_point(self.back_wall_top_point)
 
         bottom_solar_panel = self.__build_solar_panel(bottom_solar_panel_p1,
             bottom_solar_panel_p2, bottom_solar_panel_p3)
@@ -115,8 +113,11 @@ class Satellite:
         
         return [bottom_solar_panel, bottom_antenna, bottom_front_line, bottom_back_line]
 
-    def __reflect_point(self, point: QPointF, center: QPointF, symmetry_vector: QVector2D) -> QPointF:
+    def __reflect_point(self, point: QPointF) -> QPointF:
+        center = self.center()
+        symmetry_vector = QVector2D(self.window_center - center)
         vector = QVector2D(point - center)
+
         reflected = tf.reflect_vector(vector, symmetry_vector)
         return reflected.toPointF() + center
 
