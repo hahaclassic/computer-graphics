@@ -73,11 +73,11 @@ def tangent_coordinates(circle1: Circle, circle2: Circle) -> tuple[QPointF, QPoi
     center1, center2 = circle1.center(), circle2.center()
 
     # The upper points of the circles
-    top_point1 = QPointF(center1.x(), center1.y() + circle1.radius())
-    top_point2 = QPointF(center2.x(), center2.y() + circle2.radius())
+    top_point1 = QPointF(0, circle1.radius())
+    top_point2 = QPointF(0, circle2.radius())
 
-    radius_vector1 = QVector2D(top_point1 - center1)
-    radius_vector2 = QVector2D(top_point2 - center2)
+    radius_vector1 = QVector2D(top_point1)
+    radius_vector2 = QVector2D(top_point2)
 
     rotate_vector(radius_vector1, alpha)
     rotate_vector(radius_vector2, alpha)
