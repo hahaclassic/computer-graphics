@@ -1,46 +1,54 @@
 import math
 from PyQt6.QtCore import QPointF
+from PyQt6.QtGui import QVector2D
 
 class Circle: 
     def __init__(self, point1: QPointF, point2: QPointF, point3: QPointF) -> None:
-
-        self.__is_valid = True
-        self.__p1 = point1
-        # self.__p2 = point2
-        # self.__p3 = point3
-        try:
-            self.__center = self.__find_center(point1, point2, point3)
-            self.__radius = self.__find_radius()
-        except:
-            self.__center, self.__radius = QPointF(0,0), 0
-            self.__is_valid = False
-
-    def __find_center(self, p1: QPointF, p2: QPointF, p3: QPointF) -> QPointF:
-
-        squares_sum1 = (p1.x() ** 2) + (p1.y() ** 2)
-        squares_sum2 = (p2.x() ** 2) + (p2.y() ** 2)
-        squares_sum3 = (p3.x() ** 2) + (p3.y() ** 2) 
-        a = squares_sum2 - squares_sum3
-        b = squares_sum3 - squares_sum1
-        c = squares_sum1 - squares_sum2 
-        d = p1.x() * (p2.y() - p3.y()) + p2.x() * (p3.y() - p1.y()) + p3.x() * (p1.y() - p2.y())
+        self.__eps = 1e-07
+        self.__center, ok = self.__find_center(point1, point2, point3)
+        self.__is_valid = ok
+        if ok:
+            self.__radius = self.__find_radius(point1)
+        else:
+            self.__radius = 0.0
+            
+    # Поиск центра окружности через пересечение перпендикуляров, проведенных
+    # из центров хорд, соединяющих точки p1, p2 и p1, p3. 
+    # Прямые представлены в виде 'точка + направляющий вектор'.
+    # Система уравнений решена методом Крамера.
+    def __find_center(self, p1: QPointF, p2: QPointF, p3: QPointF) -> tuple[QPointF, bool]:
         
-        center_x = -0.5 * (p1.y() * a + p2.y() * b + p3.y() * c) * (1 / d) 
-        center_y = 0.5 * (p1.x() * a + p2.x() * b + p3.x() * c) * (1 / d)
+        vec1, vec2 = QVector2D(p2 - p1), QVector2D(p3 - p1)    
+        direction_vec1 = self.__perpendicular_vector(vec1)
+        direction_vec2 = self.__perpendicular_vector(vec2)
+        mid_point1, mid_point2 = (p1 + p2) / 2, (p1 + p3) / 2
 
-        return QPointF(center_x, center_y)
+        point_diff = mid_point2 - mid_point1
+        d = direction_vec2.x() * direction_vec1.y() - direction_vec1.x() * direction_vec2.y()
+        d_t = point_diff.y() * direction_vec2.x() - point_diff.x() * direction_vec2.y()
 
-    def __find_radius(self) -> float:
-        diff = self.__center - self.__p1
-        return math.hypot(diff.x(), diff.y())
+        if math.fabs(d) > self.__eps:
+            t = d_t / d
+            center = mid_point1 + t * direction_vec1.toPointF()
+            ok = True
+        else:
+            center = QPointF(0, 0)
+            ok = False
+    
+        return center, ok
+
+    def __perpendicular_vector(self, vec: QVector2D) -> QVector2D:
+        return QVector2D(-vec.y(), vec.x()).normalized()
+
+    def __find_radius(self, point: QPointF) -> float:
+        return QVector2D(self.__center).distanceToPoint(QVector2D(point))
     
     def __str__(self) -> str:
         return f"center = ({self.__center.x():.3f}, {self.__center.y():.3f}), R = {self.__radius:.3f}"
     
     def centers_distance(self, other) -> float:
         if isinstance(other, Circle):
-            diff = self.__center - other.__center
-            return math.hypot(diff.x(), diff.y())
+            return QVector2D(self.__center).distanceToPoint(QVector2D(other.__center))
         return -1
 
     def is_valid(self) -> bool:
