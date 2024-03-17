@@ -37,13 +37,11 @@ def rotate_point(point: QPointF, center: QPointF, angle: float) -> QPointF:
 
 
 def move_point(point: QPointF, dx: float, dy: float) -> QPointF:
-   
     return point + QPointF(dx, dy)
 
 
 def angle_between_vectors(vec1: QVector2D, vec2: QVector2D) -> float:
-    product = vec1 * vec2
-    return math.acos((product.x() + product.y()) / (vec1.length() * vec2.length()))
+    return math.acos(QVector2D.dotProduct(vec1, vec2) / (vec1.length() * vec2.length()))
 
 
 def reflect_vector(vector: QVector2D, symmetry_vector: QVector2D) -> QVector2D:

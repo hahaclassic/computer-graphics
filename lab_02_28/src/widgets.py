@@ -217,7 +217,7 @@ class MainWindow(QMainWindow):
             file = open(MANUAL_PATH, "r", encoding='utf-8')
             manual = file.read()
             file.close()
-        except:
+        except PermissionError or FileNotFoundError or IsADirectoryError:
             manual = "Произошла ошибка во время получения инструкции."
 
         manualWidget = ScrolledLabel(manual)
@@ -230,7 +230,7 @@ class MainWindow(QMainWindow):
             file = open(TASK_PATH, "r", encoding='utf-8')
             task = file.read()
             file.close()
-        except:
+        except PermissionError or FileNotFoundError or IsADirectoryError:
             task = "Произошла ошибка во время получения условия задачи."
 
         taskWidget = QLabel(task)
