@@ -55,7 +55,7 @@ class Interface(MainWindow):
         try:
             dx = float(self.offset_input_x.toPlainText())
             dy = float(self.offset_input_y.toPlainText())
-        except:
+        except ValueError:
             self.show_error_message("Некорректные данные", "В полях ввода указаны некорректные данные")
             return
         
@@ -70,7 +70,7 @@ class Interface(MainWindow):
             x = float(self.rotate_input_x.toPlainText())
             y = float(self.rotate_input_y.toPlainText())
             rad_angle = float(self.rotate_angle_input.toPlainText())
-        except:
+        except ValueError:
             self.show_error_message("Некорректные данные", "В полях ввода указаны некорректные данные")
             return
         
@@ -87,7 +87,7 @@ class Interface(MainWindow):
             x = float(self.scale_input_x.toPlainText())
             y = float(self.scale_input_y.toPlainText())
             ratio = float(self.scale_ratio_input.toPlainText())
-        except:
+        except ValueError:
             self.show_error_message("Некорректные данные", "В полях ввода указаны некорректные данные")
             return
         if ratio < EPS:
@@ -158,7 +158,7 @@ class Interface(MainWindow):
             with open(path, "r") as f:
                 data = f.read()
             float_data = list(map(float, data.split()))
-        except:
+        except PermissionError or FileNotFoundError or IsADirectoryError:
             self.show_error_message("Ошибка чтения файла", "Произошла ошибка во время открытия или чтения файла")
             return []
         
@@ -183,7 +183,7 @@ class Interface(MainWindow):
             with open(file_name, "w") as file:
                 for point in points:
                     file.write(f"{point.x()} {point.y()}\n")
-        except:
+        except PermissionError or FileNotFoundError or IsADirectoryError:
             self.show_error_message("Ошибка записи", "Произошла ошибка во время записи данных в файл")
 
     def __set_input_fields(self, center: QPointF) -> None:

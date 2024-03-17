@@ -1,7 +1,7 @@
 from PyQt6.QtCore import QPointF
 from PyQt6.QtWidgets import QGraphicsLineItem, QGraphicsPolygonItem
 from PyQt6.QtGui import QVector2D, QPolygonF
-import src.points_transformation as tf
+import src.geometry as geo
 import src.ellipse_generation as ellipse
 
 NUM_OF_SATELLITE_POINTS = 12
@@ -33,51 +33,51 @@ class Satellite:
         ]
 
     def move(self, dx: float, dy: float) -> None:
-        self.window_center = tf.move_point(self.window_center, dx, dy)
-        self.window_top_point = tf.move_point(self.window_top_point, dx, dy)
-        self.window_left_point = tf.move_point(self.window_left_point, dx, dy)
-        self.front_wall_center = tf.move_point(self.front_wall_center, dx, dy)
-        self.front_wall_top_point = tf.move_point(self.front_wall_top_point, dx, dy)
-        self.front_wall_left_point = tf.move_point(self.front_wall_left_point, dx, dy)
-        self.top_antenna_point = tf.move_point(self.top_antenna_point, dx, dy)
-        self.solar_panel_point1 = tf.move_point(self.solar_panel_point1, dx, dy)
-        self.solar_panel_point2 = tf.move_point(self.solar_panel_point2, dx, dy)
-        self.solar_panel_point3 = tf.move_point(self.solar_panel_point3, dx, dy)
-        self.back_wall_center = tf.move_point(self.back_wall_center, dx, dy)
-        self.back_wall_top_point = tf.move_point(self.back_wall_top_point, dx, dy)
-        self.back_wall_left_point = tf.move_point(self.back_wall_left_point, dx, dy)
+        self.window_center = geo.move_point(self.window_center, dx, dy)
+        self.window_top_point = geo.move_point(self.window_top_point, dx, dy)
+        self.window_left_point = geo.move_point(self.window_left_point, dx, dy)
+        self.front_wall_center = geo.move_point(self.front_wall_center, dx, dy)
+        self.front_wall_top_point = geo.move_point(self.front_wall_top_point, dx, dy)
+        self.front_wall_left_point = geo.move_point(self.front_wall_left_point, dx, dy)
+        self.top_antenna_point = geo.move_point(self.top_antenna_point, dx, dy)
+        self.solar_panel_point1 = geo.move_point(self.solar_panel_point1, dx, dy)
+        self.solar_panel_point2 = geo.move_point(self.solar_panel_point2, dx, dy)
+        self.solar_panel_point3 = geo.move_point(self.solar_panel_point3, dx, dy)
+        self.back_wall_center = geo.move_point(self.back_wall_center, dx, dy)
+        self.back_wall_top_point = geo.move_point(self.back_wall_top_point, dx, dy)
+        self.back_wall_left_point = geo.move_point(self.back_wall_left_point, dx, dy)
 
     def scale(self, center: QPointF, ratio: float) -> None:
 
-        self.window_center = tf.scale_point(self.window_center, center, ratio)
-        self.window_top_point = tf.scale_point(self.window_top_point, center, ratio)
-        self.window_left_point = tf.scale_point(self.window_left_point, center, ratio)
-        self.front_wall_center = tf.scale_point(self.front_wall_center, center, ratio)
-        self.front_wall_top_point = tf.scale_point(self.front_wall_top_point, center, ratio)
-        self.front_wall_left_point = tf.scale_point(self.front_wall_left_point, center, ratio)
-        self.top_antenna_point = tf.scale_point(self.top_antenna_point, center, ratio)
-        self.solar_panel_point1 = tf.scale_point(self.solar_panel_point1, center, ratio)
-        self.solar_panel_point2 = tf.scale_point(self.solar_panel_point2, center, ratio)
-        self.solar_panel_point3 = tf.scale_point(self.solar_panel_point3, center, ratio)
-        self.back_wall_center = tf.scale_point(self.back_wall_center, center, ratio)
-        self.back_wall_top_point = tf.scale_point(self.back_wall_top_point, center, ratio)
-        self.back_wall_left_point = tf.scale_point(self.back_wall_left_point, center, ratio)
+        self.window_center = geo.scale_point(self.window_center, center, ratio)
+        self.window_top_point = geo.scale_point(self.window_top_point, center, ratio)
+        self.window_left_point = geo.scale_point(self.window_left_point, center, ratio)
+        self.front_wall_center = geo.scale_point(self.front_wall_center, center, ratio)
+        self.front_wall_top_point = geo.scale_point(self.front_wall_top_point, center, ratio)
+        self.front_wall_left_point = geo.scale_point(self.front_wall_left_point, center, ratio)
+        self.top_antenna_point = geo.scale_point(self.top_antenna_point, center, ratio)
+        self.solar_panel_point1 = geo.scale_point(self.solar_panel_point1, center, ratio)
+        self.solar_panel_point2 = geo.scale_point(self.solar_panel_point2, center, ratio)
+        self.solar_panel_point3 = geo.scale_point(self.solar_panel_point3, center, ratio)
+        self.back_wall_center = geo.scale_point(self.back_wall_center, center, ratio)
+        self.back_wall_top_point = geo.scale_point(self.back_wall_top_point, center, ratio)
+        self.back_wall_left_point = geo.scale_point(self.back_wall_left_point, center, ratio)
 
     def rotate(self, center: QPointF, angle: float) -> None:
 
-        self.window_center = tf.rotate_point(self.window_center, center, angle)
-        self.window_top_point = tf.rotate_point(self.window_top_point, center, angle)
-        self.window_left_point = tf.rotate_point(self.window_left_point, center, angle)
-        self.front_wall_center = tf.rotate_point(self.front_wall_center, center, angle)
-        self.front_wall_top_point = tf.rotate_point(self.front_wall_top_point, center, angle)
-        self.front_wall_left_point = tf.rotate_point(self.front_wall_left_point, center, angle)
-        self.top_antenna_point = tf.rotate_point(self.top_antenna_point, center, angle)
-        self.solar_panel_point1 = tf.rotate_point(self.solar_panel_point1, center, angle)
-        self.solar_panel_point2 = tf.rotate_point(self.solar_panel_point2, center, angle)
-        self.solar_panel_point3 = tf.rotate_point(self.solar_panel_point3, center, angle)
-        self.back_wall_center = tf.rotate_point(self.back_wall_center, center, angle)
-        self.back_wall_top_point = tf.rotate_point(self.back_wall_top_point, center, angle)
-        self.back_wall_left_point = tf.rotate_point(self.back_wall_left_point, center, angle)
+        self.window_center = geo.rotate_point(self.window_center, center, angle)
+        self.window_top_point = geo.rotate_point(self.window_top_point, center, angle)
+        self.window_left_point = geo.rotate_point(self.window_left_point, center, angle)
+        self.front_wall_center = geo.rotate_point(self.front_wall_center, center, angle)
+        self.front_wall_top_point = geo.rotate_point(self.front_wall_top_point, center, angle)
+        self.front_wall_left_point = geo.rotate_point(self.front_wall_left_point, center, angle)
+        self.top_antenna_point = geo.rotate_point(self.top_antenna_point, center, angle)
+        self.solar_panel_point1 = geo.rotate_point(self.solar_panel_point1, center, angle)
+        self.solar_panel_point2 = geo.rotate_point(self.solar_panel_point2, center, angle)
+        self.solar_panel_point3 = geo.rotate_point(self.solar_panel_point3, center, angle)
+        self.back_wall_center = geo.rotate_point(self.back_wall_center, center, angle)
+        self.back_wall_top_point = geo.rotate_point(self.back_wall_top_point, center, angle)
+        self.back_wall_left_point = geo.rotate_point(self.back_wall_left_point, center, angle)
 
     def center(self) -> QPointF:
         center = (self.window_center + self.back_wall_left_point) / 2
@@ -118,7 +118,7 @@ class Satellite:
         symmetry_vector = QVector2D(self.window_center - center)
         vector = QVector2D(point - center)
 
-        reflected = tf.reflect_vector(vector, symmetry_vector)
+        reflected = geo.reflect_vector(vector, symmetry_vector)
         return reflected.toPointF() + center
 
     def __build_top_side_wall(self) -> list[QGraphicsLineItem, QGraphicsPolygonItem]:
