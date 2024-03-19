@@ -1,0 +1,61 @@
+[
+    {
+        "test_number": 0,
+        "description": "Поворот спутника на 90 градусов против часовой стрелки",
+        "cmd": [
+            {
+                "type": "rotate",
+                "input": {
+                    "offset_dx": 0,
+                    "offset_dy": 0,
+                    "rotate_center_x": 0,
+                    "rotate_center_y": 0,
+                    "angle": 90,
+                    "scale_center_x": 0,
+                    "scale_center_y": 0,
+                    "scale_ratio": 0
+                }
+            }
+        ]
+    },
+    {
+        "test_number": 1,
+        "description": "Поворот спутника на 90 градусов против часовой стрелки и смещение на 10 по Ox и на 10 по Оу",
+        "cmd": [
+            {
+                "type": "rotate",
+                "input": {
+                    "offset_dx": 0,
+                    "offset_dy": 0,
+                    "rotate_center_x": 0,
+                    "rotate_center_y": 0,
+                    "angle": 90,
+                    "scale_center_x": 0,
+                    "scale_center_y": 0,
+                    "scale_ratio": 0
+                }
+            },
+            {
+                "type": "move",
+                "input": {
+                    "offset_dx": 10,
+                    "offset_dy": 10
+                }
+            }
+        ]
+    },
+    {
+        "test_number": 2,
+        "description": "Масштабирование спутника в 2 раза",
+        "cmd": [
+            {
+                "type": "scale",
+                "input": {
+                    "scale_center_x": 0,
+                    "scale_center_y": 0,
+                    "scale_ratio": 2
+                }
+            }
+        ]
+    }
+]

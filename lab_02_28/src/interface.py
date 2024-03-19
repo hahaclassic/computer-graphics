@@ -45,7 +45,7 @@ class Interface(MainWindow):
         self.menu_bar = MenuBar(self)
         self.setMenuBar(self.menu_bar)
 
-        self.button_return_to_orignal.clicked.connect(self.return_to_orignal)
+        self.button_reset.clicked.connect(self.reset)
         self.button_cancel_last_transformation.clicked.connect(self.cancel_last_transformation)
         self.offset_button.clicked.connect(self.move_satellite)
         self.rotate_button.clicked.connect(self.rotate_satellite)
@@ -114,10 +114,18 @@ class Interface(MainWindow):
             self.paint_satellite(self.state_stack[-1])
             self.__show_center_coordinates(self.state_stack[-1])
 
-    def return_to_orignal(self) -> None:
+    def reset(self) -> None:
         self.state_stack = self.state_stack[:1]
         self.paint_satellite(self.state_stack[-1])
         self.__show_center_coordinates(self.state_stack[-1])
+        self.offset_input_x.clear()
+        self.offset_input_y.clear()
+        self.rotate_input_x.clear()
+        self.rotate_input_y.clear()
+        self.rotate_angle_input.clear()
+        self.scale_input_x.clear()
+        self.scale_input_x.clear()
+        self.scale_ratio_input.clear()
 
     def __show_center_coordinates(self, satellite: Satellite) -> None:
         center = satellite.center()

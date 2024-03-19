@@ -57,7 +57,7 @@ class MainWindow(QMainWindow):
         self.line = create_line()
 
         # Create buttons
-        self.button_return_to_orignal = QPushButton('Вернуть исходное состояние', self)
+        self.button_reset = QPushButton('Вернуть исходное состояние', self)
         self.button_cancel_last_transformation = QPushButton("Отменить последнее преобразование", self)
       
         # Center log
@@ -207,7 +207,7 @@ class MainWindow(QMainWindow):
         
         layoutWidget.addWidget(self.line, 25, 2, 1, 2)
         layoutWidget.addWidget(self.button_cancel_last_transformation, 26, 2, 1, 2)
-        layoutWidget.addWidget(self.button_return_to_orignal, 27, 2, 1, 2)
+        layoutWidget.addWidget(self.button_reset, 27, 2, 1, 2)
 
         return layoutWidget
 
