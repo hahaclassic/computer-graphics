@@ -1,0 +1,65 @@
+[
+    {
+        "description": "Поворот спутника на 90 градусов против часовой стрелки относительно центра спутника (0,0)",
+        "cmd": [
+            {
+                "type": "rotate",
+                "input": {
+                    "offset_dx": 0,
+                    "offset_dy": 0,
+                    "rotate_center_x": 0,
+                    "rotate_center_y": 0,
+                    "angle": 90,
+                    "scale_center_x": 0,
+                    "scale_center_y": 0,
+                    "scale_ratio": 0
+                }
+            }
+        ]
+    },
+    {
+        "description": "Масштабирование спутника в 2 раза относительно центра спутника (0,0)",
+        "cmd": [
+            {
+                "type": "scale",
+                "input": {
+                    "scale_center_x": 0,
+                    "scale_center_y": 0,
+                    "scale_ratio": 2
+                }
+            }
+        ]
+    },
+    {
+        "description": "Cмещение спутника на 100 единиц влево",
+        "cmd": [
+            {
+                "type": "move",
+                "input": {
+                    "offset_dx": -100,
+                    "offset_dy": 0
+                }
+            }
+        ]
+    },
+    {
+        "description": "Смещение спутника на 50 единиц по Ox и на 50 единиц по Oy, затем поворот на 30 градусов относительно (0,0)",
+        "cmd": [
+            {
+                "type": "move",
+                "input": {
+                    "offset_dx": 100,
+                    "offset_dy": 100
+                }
+            },
+            {
+                "type": "rotate",
+                "input": {
+                    "rotate_center_x": 0,
+                    "rotate_center_y": 0,
+                    "angle": 30
+                }
+            }
+        ]
+    }
+]

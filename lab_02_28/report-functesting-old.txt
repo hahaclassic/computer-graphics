@@ -1,0 +1,6 @@
+coverage: 88.00%
+number of tests: 4
+< test: 1, time: 2.6049 >
+< test: 2, time: 2.5481 >
+< test: 3, time: 2.7340 >
+< test: 4, time: 5.4228 >
