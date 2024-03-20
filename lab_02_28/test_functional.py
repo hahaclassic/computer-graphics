@@ -16,7 +16,7 @@ def interface(qtbot):
     qtbot.addWidget(interface)
     return interface
 
-def test(interface, qtbot):
+def test(interface: Interface, qtbot):
 
     with open(TEST_FILE, "r") as f:
         tests = json.load(f)
@@ -48,7 +48,6 @@ def test(interface, qtbot):
 
 def run_test(interface: Interface, qtbot, test) -> float:
 
-    # Добавить время
     start = time.monotonic()
     for action in test["cmd"]:
         clear_fields(interface)
@@ -58,7 +57,7 @@ def run_test(interface: Interface, qtbot, test) -> float:
 
     return elapsed_time
 
-def press_button(interface, qtbot, operation_type: str):
+def press_button(interface: Interface, qtbot, operation_type: str):
     match operation_type:
         case "move":
             qtbot.mouseClick(interface.offset_button, Qt.MouseButton.LeftButton)
@@ -69,7 +68,7 @@ def press_button(interface, qtbot, operation_type: str):
         case "reset":
             qtbot.mouseClick(interface.button_reset, Qt.MouseButton.LeftButton)
 
-def parse_fields(interface, action):
+def parse_fields(interface: Interface, action):
     data = action["input"]
     if "offset_dx" in data:
         QTest.keyClicks(interface.offset_input_x, str(data["offset_dx"]))
