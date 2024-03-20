@@ -2,11 +2,13 @@ import pytest
 import json
 import time
 from src.interface import Interface
-
 from PyQt6.QtTest import QTest
 from PyQt6.QtCore import Qt
 
 TEST_FILE = "./test_data/test.json"
+RESULT_DIR = "./results/"
+TEST_REPEATS = 3 
+BUFFER = "./func_buf.txt"
 
 @pytest.fixture
 def interface(qtbot):
@@ -19,21 +21,42 @@ def test(interface, qtbot):
     with open(TEST_FILE, "r") as f:
         tests = json.load(f)
 
-    for i, test in enumerate(tests):
-        run_test(interface, qtbot, test)
+    report = open(BUFFER, "w")
+    report.write(f"number of tests: {len(tests)}\n")
 
-def run_test(interface: Interface, qtbot, test):
+    for idx, test in enumerate(tests):
+        
+        elapsed_time = 0.0
+
+        for _ in range(TEST_REPEATS):
+            press_button(interface, qtbot, "reset")
+            elapsed_time += run_test(interface, qtbot, test)
+
+        test_time = (elapsed_time / TEST_REPEATS) * 1000
+        report.write(f"< test: {idx + 1}, time: {test_time:.4f} >\n")
+
+        path = RESULT_DIR + "test" + str(idx + 1)
+
+        with open(path + "_description.txt", "w") as descrp_f:
+            descrp_f.write(test["description"])
+
+        image = interface.grab()
+        image.save(path + "_image_.png")
+
+    report.close()
+    
+
+def run_test(interface: Interface, qtbot, test) -> float:
 
     # Добавить время
+    start = time.monotonic()
     for action in test["cmd"]:
-        press_button(interface, qtbot, "reset")
+        clear_fields(interface)
         parse_fields(interface, action)
         press_button(interface, qtbot, action["type"])
-    
-    image = interface.grab()
-    image_name = "./results/test" + str(test["test_number"]) + ".png"
-    image.save(image_name)
-    # Добавить сохранение в папку изображений и описания
+    elapsed_time = time.monotonic() - start
+
+    return elapsed_time
 
 def press_button(interface, qtbot, operation_type: str):
     match operation_type:
@@ -64,3 +87,14 @@ def parse_fields(interface, action):
         QTest.keyClicks(interface.scale_input_y, str(data["scale_center_y"]))
     if "scale_ratio" in data:
         QTest.keyClicks(interface.scale_ratio_input, str(data["scale_ratio"]))
+
+def clear_fields(interface: Interface):
+    interface.offset_input_x.clear()
+    interface.offset_input_y.clear()
+    interface.rotate_input_x.clear()
+    interface.rotate_input_y.clear()
+    interface.rotate_angle_input.clear()
+    interface.scale_input_x.clear()
+    interface.scale_input_y.clear()
+    interface.scale_ratio_input.clear()
+    

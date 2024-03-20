@@ -2,7 +2,6 @@ from PyQt6.QtCore import QPointF
 from PyQt6.QtWidgets import QGraphicsLineItem, QGraphicsPolygonItem
 from PyQt6.QtGui import QVector2D, QPolygonF
 import src.geometry as geo
-import src.ellipse_generation as ellipse
 
 NUM_OF_SATELLITE_POINTS = 12
 
@@ -146,13 +145,13 @@ class Satellite:
         return QGraphicsPolygonItem(top_solar_panel)
     
     def __build_ellipsoid_objects(self) -> list[QGraphicsPolygonItem]:
-        window_items = ellipse.build_ellipse(self.window_center, self.window_top_point, 
+        window_items = geo.build_ellipse(self.window_center, self.window_top_point, 
             self.window_left_point)
         
-        front_wall_items = ellipse.build_ellipse(self.front_wall_center, 
+        front_wall_items = geo.build_ellipse(self.front_wall_center, 
             self.front_wall_top_point, self.front_wall_left_point)
         
-        back_wall_items = ellipse.build_left_half_ellipse(self.back_wall_center,
+        back_wall_items = geo.build_left_half_ellipse(self.back_wall_center,
             self.back_wall_top_point, self.back_wall_left_point)
 
         return window_items + front_wall_items + back_wall_items

@@ -118,7 +118,7 @@ class MainWindow(QMainWindow):
         self.rotate_input_y.setText("0")
         self.rotate_input_y.setFixedSize(QSize(self.input_section_width, 30))
 
-        self.rotate_angle_label = QLabel("Угол поворота")
+        self.rotate_angle_label = QLabel("Угол поворота (в градусах)")
         self.rotate_angle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.rotate_angle_label.setFixedWidth(self.input_section_width * 2)
         self.rotate_angle_input = QTextEdit(self)

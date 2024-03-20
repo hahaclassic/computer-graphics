@@ -1,8 +1,11 @@
-.PHONY: run clean release checkall format report-unittesting-latest.txt saveolds
+.PHONY: run clean release checkall format 
+.PHONY: report-unittesting-latest.txt saveolds report-functesting-latest.txt
+.DEFAULT: run
 
-.DEFAULT: release
+SRC_FILES := main.py ./src/geometry.py ./src/interface.py ./src/satellite.py ./src/widgets.py
 
 OUT_DIR := ./out
+RESULT_DIR := ./results
 
 release:
 	rm -rf $(OUT_DIR)
@@ -13,8 +16,10 @@ release:
 clean:
 	rm -rf ./.pytest_cache
 	rm -rf ./.ruff_cache
+	rm -rf $(RESULT_DIR)
 	rm -rf $(OUT_DIR)
 	rm -f report-unittesting-latest.txt
+	rm -f report-functesting-latest.txt
 
 run:
 	python3 $(OUT_DIR)/main.py
@@ -24,11 +29,17 @@ checkall:
 	lizard -E duplicate
 
 format:
-	pyformat -i main.py ./src/circle.py ./src/interface.py \
-	./src/maxarea.py ./src/widgets.py
+	pyformat -i $(SRC_FILES)
 
 report-unittesting-latest.txt:
-	./scripts/coverage.sh > $@
+	./scripts/coverage.sh test_unit.py > $@
+
+report-functesting-latest.txt:
+	rm -rf $(RESULT_DIR)
+	mkdir $(RESULT_DIR)
+	./scripts/coverage.sh test_functional.py > $@
+	cat ./func_buf.txt >> $@
+	rm -f func_buf.txt
 
 saveolds:
 	./scripts/saveolds.sh
