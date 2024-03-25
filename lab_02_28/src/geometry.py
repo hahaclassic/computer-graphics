@@ -46,14 +46,30 @@ def move_point(point: QPointF, dx: float, dy: float) -> QPointF:
     return point + QPointF(dx, dy)
 
 
-def angle_between_vectors(vec1: QVector2D, vec2: QVector2D) -> float:
-    cos = QVector2D.dotProduct(vec1, vec2) / (vec1.length() * vec2.length())
-    return math.acos(cos)
+def pseudoscalar_product(vec1: QVector2D, vec2: QVector2D) -> float:
+    return vec1.x() * vec2.y() - vec1.y() * vec2.x()
 
+
+# Возвращает угол, на который надо повернуть вектор vec, чтобы 
+# vec и base_vec оказались сонаправленными.
+#
+# returns angle > 0 -> поворот против часовой
+#         angle < 0 -> поворот по часовой
+#
+# Угол вычисляется через скалярное произведение, т.к. необходимо 
+# учесть тупые углы тоже.
+def angle_between_vectors(vec: QVector2D, base_vec: QVector2D) -> float:
+    prod = pseudoscalar_product(vec, base_vec)
+    cos = QVector2D.dotProduct(vec, base_vec) / (vec.length() * base_vec.length())
+    angle = math.acos(cos)
+    if prod < 0:
+        return -angle
+    return angle
+    
 
 def reflect_vector(vector: QVector2D, symmetry_vector: QVector2D) -> QVector2D:
     angle = angle_between_vectors(vector, symmetry_vector)
-    return rotate_vector(vector, -angle * 2)
+    return rotate_vector(vector, angle * 2)
 
 
 def create_ellipse_functions(center: QPointF, top_point: QPointF,
