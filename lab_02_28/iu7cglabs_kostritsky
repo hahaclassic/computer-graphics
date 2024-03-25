@@ -32,7 +32,7 @@ format:
 	pyformat -i -a --remove-all-unused-imports --remove-unused-variables $(SRC_FILES)
 
 report-unittesting-latest.txt:
-	./scripts/coverage.sh test_unit.py > $@
+	./scripts/coverage.sh test_geometry.py > $@
 
 report-functesting-latest.txt:
 	rm -rf $(RESULT_DIR)
