@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QMainWindow, QMenu, QMenuBar, QFileDialog, QMessageB
 from PyQt6.QtGui import QAction, QColor, QTransform
 from PyQt6.QtCore import QPointF, QLineF
 from PyQt6 import uic
+import src.geometry as geo
 
 class Interface(QMainWindow):
     def __init__(self):
@@ -52,7 +53,7 @@ class Interface(QMainWindow):
                 f"background-color: {self.segment_color.name()}"
             )
 
-    def plot_segment(self):
+    def get_points(self) -> tuple[QPointF, QPointF]:
         try:
             start_x = float(self.input_start_x.toPlainText())
             start_y = float(self.input_start_y.toPlainText())
@@ -61,9 +62,21 @@ class Interface(QMainWindow):
         except ValueError:
             return
 
-        start, end = QPointF(start_x, start_y), QPointF(end_x, end_y)
+        return QPointF(start_x, start_y), QPointF(end_x, end_y)
+
+    def plot_segment(self):
+        start, end = self.get_points()
 
         match self.algorithm.currentIndex():
+            case 0:
+                geo.float_bresenham(self.scene, self.segment_color, start, end)
+
+            case 1:
+                geo.int_bresenham(self.scene, self.segment_color, start, end)
+
+            case 3:
+                geo.digital_differential_analyzer(self.scene, self.segment_color, start, end)
+
             case 5: # "Алгоритм, использующий библиотечную функцию":
                 line = QLineF(start, end)
                 self.scene.addLine(line, self.segment_color)
