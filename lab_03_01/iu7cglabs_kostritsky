@@ -11,6 +11,7 @@ release:
 	rm -rf $(OUT_DIR)
 	mkdir $(OUT_DIR)
 	cp -r ./src $(OUT_DIR)
+	cp -r ./ui $(OUT_DIR)
 	cp main.py $(OUT_DIR)
 
 clean:
