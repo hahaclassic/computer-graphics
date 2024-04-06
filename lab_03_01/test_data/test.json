@@ -1,0 +1,45 @@
+[
+    {
+        "description": "Сравнение качества построения отрезков алгоритмов Ву и ЦДА под острыми углами (ЦДА слева, Ву справа)",
+        "cmd": [
+            {
+                "type": "segment",
+                "input": {
+                    "algorithm": "wu",
+                    "start_x": 0,
+                    "start_y": 0,
+                    "end_x": 200,
+                    "end_y": 20,
+                    "angle": 0
+                }
+            },
+            {
+                "type": "segment",
+                "input": {
+                    "algorithm": "dda",
+                    "start_x": 0,
+                    "start_y": 0,
+                    "end_x": -200,
+                    "end_y": 20,
+                    "angle": 0
+                }
+            }
+        ]
+    },
+    {
+        "description": "Построение спектра с помощью алгоритма Брезенхема с вещественными данными",
+        "cmd": [
+            {
+                "type": "spectrum",
+                "input": {
+                    "algorithm": "bresenham_float",
+                    "start_x": 0,
+                    "start_y": 0,
+                    "end_x": 200,
+                    "end_y": 20,
+                    "angle": 10
+                }
+            }
+        ]
+    }
+]

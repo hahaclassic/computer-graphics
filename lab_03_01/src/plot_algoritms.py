@@ -4,7 +4,6 @@ from PyQt6.QtGui import QColor
 import src.geometry as geo
 from enum import IntEnum
 import math
-import copy
 
 class Algorithm(IntEnum):
     DDA = 0
@@ -39,6 +38,10 @@ class SegmentPlotter:
         self.scene.addEllipse(point.x(), point.y(), 0.5, 0.5, color)
 
     def plot(self, type: Algorithm, segment: QLineF, color: QColor) -> None:
+        if segment.p1() == segment.p2():
+            self.__plot_point(segment.p1(), segment.p2(), color)
+            return
+
         if type in self.algorithms:
             self.algorithms[type](segment.p1(), segment.p2(), color)
 
@@ -59,10 +62,6 @@ class SegmentPlotter:
         self.scene.addLine(line, color)
 
     def digital_differential_analyzer(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        if start == end:
-            self.__plot_point(start, color)
-            return
-
         diff: QPointF = end - start
         diff_x = math.fabs(diff.x()) 
         diff_y = math.fabs(diff.y())
@@ -84,10 +83,6 @@ class SegmentPlotter:
             curr_y += dy
 
     def bresenham_float(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        if start == end:
-            self.__plot_point(start, color)
-            return
-        
         diff: QPointF = end - start
         sx, sy = sign(diff.x()), sign(diff.y())
         dx, dy = abs(diff.x()), abs(diff.y())
@@ -116,10 +111,6 @@ class SegmentPlotter:
             err += m
 
     def bresenham_int(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        if start == end:
-            self.__plot_point(start, color)
-            return
-        
         diff: QPointF = end - start
         sx, sy = sign(diff.x()), sign(diff.y())
         dx, dy = int(abs(diff.x())), int(abs(diff.y()))
@@ -146,23 +137,20 @@ class SegmentPlotter:
             err += 2 * dy
 
     def bresenham_smooth(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        color = copy.deepcopy(color)
-        if start == end:
-            self.__plot_point(start, color)
-            return
+        color = QColor(color)
         
         diff: QPointF = end - start
         sx, sy = sign(diff.x()), sign(diff.y())
-        dx, dy = abs(diff.x()), abs(diff.y())
+        dx, dy = int(abs(diff.x())), int(abs(diff.y()))
        
         exchange = False
         if dy > dx:
             dx, dy = dy, dx
             exchange = True 
 
-        tg = dy / dx * self.Intence
+        m = dy / dx * self.Intence
         err = self.Intence / 2
-        w = self.Intence - tg 
+        w = self.Intence - m
 
         x, y = start.x(), start.y()
         color.setAlphaF(err)
@@ -170,22 +158,19 @@ class SegmentPlotter:
         for _ in range(int(dx)):
             color.setAlphaF(err)
             self.__plot_point(QPointF(x, y), color)
-            if err < w:
+            if err <= w:
                 if exchange:
                     y += sy
                 else:
                     x += sx
-                err += tg
+                err += m
             else:
                 y += sy
                 x += sx
                 err -= w
-         
+    
     def wu(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        color = copy.deepcopy(color)
-        if start == end:
-            self.__plot_point(start, color)
-            return
+        color = QColor(color)
         
         diff: QPointF = end - start
         sx, sy = sign(diff.x()), sign(diff.y())
@@ -217,6 +202,4 @@ class SegmentPlotter:
                     y += sy
                     err -= 1
                 x += sx
-            
-
  
