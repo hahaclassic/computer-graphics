@@ -4,7 +4,7 @@ from PyQt6.QtGui import QColor
 import src.geometry as geo
 from enum import IntEnum
 import math
-from functools import singledispatchmethod
+
 
 class Ellipse:
     def __init__(self, center: QPointF, big_half_axis: float, small_half_axis: float) -> None:
@@ -12,12 +12,10 @@ class Ellipse:
         self.small_half_axis = small_half_axis
         self.big_half_axis = big_half_axis
 
-class Circle(Ellipse):
+class Circle:
     def __init__(self, center: QPointF, radius: float) -> None:
-        super.__init__(self, center, radius, radius)
-
-    def radius(self):
-        return self.small_half_axis
+        self.radius = radius
+        self.center = center
     
 class Spectrum:
     def __init__(self, step: float, num_of_figures: int) -> None:
@@ -58,8 +56,34 @@ class CirclePlotter:
         if algo_type in self.algorithms and isinstance(circle, Circle):
             self.algorithms[algo_type](circle, color)
 
-    def canonical(self, circle, color) -> None:
+    def spectrum(self, algo_type: Algorithm, circle: Circle, spectrum: Spectrum, color: QColor) -> None:
+        if algo_type not in self.algorithms:
+            return
+
+        for _ in range(0, spectrum.num_of_figures):
+            self.algorithms[algo_type](circle, color)
+            circle.radius += spectrum.step
+
+
+    def canonical(self, circle: Circle, color: QColor) -> None:
         pass
+
+    def parametric(self, circle: Circle, color: QColor) -> None:
+        pass
+
+    def bresenham(self, circle: Circle, color: QColor) -> None:
+        pass
+
+    def midpoint(self, circle: Circle, color: QColor) -> None:
+        pass
+
+    def build_in(self, circle: Circle, color: QColor) -> None:
+        self.scene.addEllipse(
+            x = circle.center.x() - circle.radius,
+            y = circle.center.y() + circle.radius,
+            h = circle.radius * 2, 
+            w = circle.radius * 2
+        )
 
 class EllipsePlotter:
     def __init__(self, scene: QGraphicsScene) -> None:
@@ -74,12 +98,41 @@ class EllipsePlotter:
             Algorithm.BUILD_IN: self.build_in
         }
 
-    def plot(self, algo_type: Algorithm, circle: Ellipse, color: QColor) -> None:
-        if algo_type in self.algorithms and isinstance(circle, Circle):
-            self.algorithms[algo_type](circle, color)
+    def plot(self, algo_type: Algorithm, ellipse: Ellipse, color: QColor) -> None:
+        if algo_type in self.algorithms and isinstance(ellipse, Circle):
+            self.algorithms[algo_type](ellipse, color)
 
-    def canonical(self, circle, color) -> None:
+    def spectrum(self, algo_type: Algorithm, ellipse: Ellipse, spectrum: Spectrum, color: QColor) -> None:
+        if algo_type not in self.algorithms:
+            return
+
+        for _ in range(0, spectrum.num_of_figures):
+            self.algorithms[algo_type](ellipse, color)
+            ellipse.big_half_axis += spectrum.step
+            ellipse.small_half_axis += spectrum.step
+
+    def canonical(self, ellipse: Ellipse, color: QColor) -> None:
         pass
+
+    def parametric(self, ellipse: Ellipse, color: QColor) -> None:
+        pass
+
+    def bresenham(self, ellipse: Ellipse, color: QColor) -> None:
+        pass
+
+    def midpoint(self, ellipse: Ellipse, color: QColor) -> None:
+        pass
+
+    def build_in(self, ellipse: Ellipse, color: QColor) -> None:
+        self.scene.addEllipse(
+            x = ellipse.center.x() - ellipse.big_half_axis,
+            y = ellipse.center.y() + ellipse.small_half_axis,
+            h = ellipse.small_half_axis * 2, 
+            w = ellipse.big_half_axis * 2
+        )
+
+    def __plot_point(self, point: QPointF, color: QColor) -> None:
+        self.scene.addEllipse(point.x(), point.y(), 0.5, 0.5, color)
 
 
 class FigurePlotter:
@@ -88,20 +141,6 @@ class FigurePlotter:
         self.ellipse_plotter = EllipsePlotter(scene)
         self.scene = scene
         self.Intence = 1.0
-        self.circle_algorithms = {
-            Algorithm.CANONICAL: self.circle_canonical,
-            Algorithm.PARAMETRIC: self.circle_parametric,
-            Algorithm.BRESENHAM: self.circle_bresenham,
-            Algorithm.MIDPOINT: self.circle_midpoint,
-            Algorithm.BUILD_IN: self.circle_build_in
-        }
-        self.ellipse_algorithms = {
-            Algorithm.CANONICAL: self.ellipse_canonical,
-            Algorithm.PARAMETRIC: self.ellipse_parametric,
-            Algorithm.BRESENHAM: self.ellipse_bresenham,
-            Algorithm.MIDPOINT: self.ellipse_midpoint,
-            Algorithm.BUILD_IN: self.ellipse_build_in
-        }
 
     def plot(self, algo_type: Algorithm, figure: Circle|Ellipse, color: QColor) -> None:
         if isinstance(figure, Circle):
@@ -109,164 +148,32 @@ class FigurePlotter:
         elif isinstance(figure, Ellipse):
             self.ellipse_plotter.plot(algo_type, figure, color)
     
-    def spectrum(self, type: Algorithm, segment: QLineF, color: QColor, angle: float):
-        if type not in self.algorithms:
-            return
+    def spectrum(self, algo_type: Algorithm, figure: Circle|Ellipse, spectrum: Spectrum, color: QColor):
+        if isinstance(figure, Circle):
+            self.circle_plotter.spectrum(algo_type, figure, color)
+        elif isinstance(figure, Ellipse):
+            self.ellipse_plotter.spectrum(algo_type, figure, color)                                                                                           
 
-        start, end = segment.p1(), segment.p2()
-        sum_angle = 0.0
-        full_circle = 2 * math.pi  
-        while sum_angle < full_circle:
-            self.algorithms[type](start, end, color)
-            end = geo.rotate_point(end, start, angle)
-            sum_angle += angle                                                                                               
 
-    def ellipse_build_in(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        line = QLineF(start, end)
-        self.scene.addEllipse(line, color)
+def plot_symmetric_points(scene: QGraphicsScene, point: QPointF, center: QPointF, color: QColor) -> None:
+    p_x, p_y, c_x, c_y = point.x(), point.y(), center.x(), center.y()
 
-    def digital_differential_analyzer(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        diff: QPointF = end - start
-        diff_x = math.fabs(diff.x()) 
-        diff_y = math.fabs(diff.y())
-        if diff_x > diff_y:
-            length = diff_x
-        else:
-            length = diff_y
+    p1 = QPointF(p_x - c_y + c_x, p_x - c_x + c_y)
+    p2 = QPointF(-p_y + c_y + c_x, p_x - c_x + c_y)
+    p3 = QPointF(p_y - c_y + c_x, -p_x + c_x + c_y)
+    p4 = QPointF(-p_y + c_y + c_x, -p_x + c_x + c_y)
+    plot_point(scene, p1, color)
+    plot_point(scene, p2, color)
+    plot_point(scene, p3, color)
+    plot_point(scene, p4, color)
 
-        dx = diff.x() / length
-        dy = diff.y() / length
+    set_pixel(canvas,  dot[0],           dot[1],          dot[2])
+    set_pixel(canvas, -dot[0] + 2 * xc,  dot[1],          dot[2])
+    set_pixel(canvas,  dot[0],          -dot[1] + 2 * yc, dot[2])
+    set_pixel(canvas, -dot[0] + 2 * xc, -dot[1] + 2 * yc, dot[2])
 
-        curr_x = start.x() + 0.5 * sign(dx)
-        curr_y = start.y() + 0.5 * sign(dy)
+def plot_point(scene: QGraphicsScene, point: QPointF, color: QColor) -> None:
+    scene.addEllipse(point.x(), point.y(), 0.5, 0.5, color)
 
-        for _ in range(1, int(length) + 1):
-            x, y = int(curr_x), int(curr_y)
-            self.__plot_point(QPointF(x, y), color)
-            curr_x += dx
-            curr_y += dy
 
-    def bresenham_float(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        diff: QPointF = end - start
-        sx, sy = sign(diff.x()), sign(diff.y())
-        dx, dy = abs(diff.x()), abs(diff.y())
-       
-        exchange = False
-        if dy > dx:
-            dx, dy = dy, dx
-            exchange = True 
-        m = dy / dx
-
-        err = m - 0.5
-        x, y = start.x(), start.y()
-
-        for _ in range(int(dx)):
-            self.__plot_point(QPointF(x, y), color)
-            while err >= 0:
-                if exchange:
-                    x += sx
-                else:
-                    y += sy
-                err -= 1.0
-            if exchange:
-                y += sy
-            else:
-                x += sx
-            err += m
-
-    def bresenham_int(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        diff: QPointF = end - start
-        sx, sy = sign(diff.x()), sign(diff.y())
-        dx, dy = int(abs(diff.x())), int(abs(diff.y()))
-        
-        exchange = False
-        if dy > dx:
-            dx, dy = dy, dx
-            exchange = True
-        err = 2 * dy - dx
-        x, y = int(start.x()), int(start.y())
-
-        for _ in range(dx):
-            self.__plot_point(QPointF(x, y), color)
-            while err >= 0:
-                if exchange:
-                    x += sx
-                else:
-                    y += sy
-                err -= 2 * dx
-            if exchange:
-                y += sy
-            else:
-                x += sx
-            err += 2 * dy
-
-    def bresenham_smooth(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        color = QColor(color)
-        
-        diff: QPointF = end - start
-        sx, sy = sign(diff.x()), sign(diff.y())
-        dx, dy = int(abs(diff.x())), int(abs(diff.y()))
-       
-        exchange = False
-        if dy > dx:
-            dx, dy = dy, dx
-            exchange = True 
-
-        m = dy / dx * self.Intence
-        err = self.Intence / 2
-        w = self.Intence - m
-
-        x, y = start.x(), start.y()
-        color.setAlphaF(err)
-        
-        for _ in range(int(dx)):
-            color.setAlphaF(err)
-            self.__plot_point(QPointF(x, y), color)
-            if err <= w:
-                if exchange:
-                    y += sy
-                else:
-                    x += sx
-                err += m
-            else:
-                y += sy
-                x += sx
-                err -= w
     
-    def wu(self, start: QPointF, end: QPointF, color: QColor) -> None:
-        color = QColor(color)
-        
-        diff: QPointF = end - start
-        sx, sy = sign(diff.x()), sign(diff.y())
-        dx, dy = abs(diff.x()), abs(diff.y())
-       
-        exchange = False
-        if dy > dx:
-            dx, dy = dy, dx
-            exchange = True 
-        m = dy / dx
-
-        err = -1
-        x, y = start.x(), start.y()
-
-        for _ in range(int(dx)):
-            color.setAlphaF(-err)
-            self.__plot_point(QPointF(x, y), color)
-            color.setAlphaF(1 + err)
-            err += m
-            if exchange:
-                self.__plot_point(QPointF(x + sx, y + sy), color)
-                if err >= 0:
-                    x += sx
-                    err -= 1
-                y += sy
-            else:
-                self.__plot_point(QPointF(x, y + sy), color)
-                if err >= 0:
-                    y += sy
-                    err -= 1
-                x += sx
-
-    def __plot_point(self, point: QPointF, color: QColor) -> None:
-        self.scene.addEllipse(point.x(), point.y(), 0.5, 0.5, color)
- 
