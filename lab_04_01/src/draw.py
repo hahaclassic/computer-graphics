@@ -4,7 +4,7 @@ from PyQt6.QtGui import QColor
 import src.geometry as geo
 from enum import IntEnum
 import math
-from functools import singledispatch
+from functools import singledispatchmethod
 
 class Ellipse:
     def __init__(self, center: QPointF, big_half_axis: float, small_half_axis: float) -> None:
@@ -41,8 +41,51 @@ def sign(num: float) -> int:
     return 0
 
 
+class CirclePlotter:
+    def __init__(self, scene: QGraphicsScene) -> None:
+        self.scene = scene
+        self.Intence = 1.0
+
+        self.algorithms = {
+            Algorithm.CANONICAL: self.canonical,
+            Algorithm.PARAMETRIC: self.parametric,
+            Algorithm.BRESENHAM: self.bresenham,
+            Algorithm.MIDPOINT: self.midpoint,
+            Algorithm.BUILD_IN: self.build_in
+        }
+
+    def plot(self, algo_type: Algorithm, circle: Circle, color: QColor) -> None:
+        if algo_type in self.algorithms and isinstance(circle, Circle):
+            self.algorithms[algo_type](circle, color)
+
+    def canonical(self, circle, color) -> None:
+        pass
+
+class EllipsePlotter:
+    def __init__(self, scene: QGraphicsScene) -> None:
+        self.scene = scene
+        self.Intence = 1.0
+
+        self.algorithms = {
+            Algorithm.CANONICAL: self.canonical,
+            Algorithm.PARAMETRIC: self.parametric,
+            Algorithm.BRESENHAM: self.bresenham,
+            Algorithm.MIDPOINT: self.midpoint,
+            Algorithm.BUILD_IN: self.build_in
+        }
+
+    def plot(self, algo_type: Algorithm, circle: Ellipse, color: QColor) -> None:
+        if algo_type in self.algorithms and isinstance(circle, Circle):
+            self.algorithms[algo_type](circle, color)
+
+    def canonical(self, circle, color) -> None:
+        pass
+
+
 class FigurePlotter:
     def __init__(self, scene: QGraphicsScene) -> None:
+        self.circle_plotter = CirclePlotter(scene)
+        self.ellipse_plotter = EllipsePlotter(scene)
         self.scene = scene
         self.Intence = 1.0
         self.circle_algorithms = {
@@ -60,19 +103,11 @@ class FigurePlotter:
             Algorithm.BUILD_IN: self.ellipse_build_in
         }
 
-    def __plot_point(self, point: QPointF, color: QColor) -> None:
-        self.scene.addEllipse(point.x(), point.y(), 0.5, 0.5, color)
-
-    @singledispatch
-    def plot(self, type: Algorithm, circle: Circle, color: QColor) -> None:
-        # if isinstance(figure, Circle):
-        #     self.__plot_circle(type, figure, color)
-        # elif isinstance(figure, Ellipse):
-        #     self.__plot_ellipse(type, figure, color)
-        #self.algorithms[type](segment.p1(), segment.p2(), color)
-
-    def plot(self, type: Algorithm, ellipse: Ellipse, color: QColor) -> None:
-        self.algorithms[type](segment.p1(), segment.p2(), color)
+    def plot(self, algo_type: Algorithm, figure: Circle|Ellipse, color: QColor) -> None:
+        if isinstance(figure, Circle):
+            self.circle_plotter.plot(algo_type, figure, color)
+        elif isinstance(figure, Ellipse):
+            self.ellipse_plotter.plot(algo_type, figure, color)
     
     def spectrum(self, type: Algorithm, segment: QLineF, color: QColor, angle: float):
         if type not in self.algorithms:
@@ -84,11 +119,11 @@ class FigurePlotter:
         while sum_angle < full_circle:
             self.algorithms[type](start, end, color)
             end = geo.rotate_point(end, start, angle)
-            sum_angle += angle
+            sum_angle += angle                                                                                               
 
-    def build_in(self, start: QPointF, end: QPointF, color: QColor) -> None:
+    def ellipse_build_in(self, start: QPointF, end: QPointF, color: QColor) -> None:
         line = QLineF(start, end)
-        self.scene.addLine(line, color)
+        self.scene.addEllipse(line, color)
 
     def digital_differential_analyzer(self, start: QPointF, end: QPointF, color: QColor) -> None:
         diff: QPointF = end - start
@@ -231,4 +266,7 @@ class FigurePlotter:
                     y += sy
                     err -= 1
                 x += sx
+
+    def __plot_point(self, point: QPointF, color: QColor) -> None:
+        self.scene.addEllipse(point.x(), point.y(), 0.5, 0.5, color)
  

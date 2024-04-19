@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QMainWindow, QMessageBox, \
 from PyQt6.QtGui import QColor, QTransform
 from PyQt6.QtCore import QPointF
 from PyQt6 import uic
-import src.plot_algoritms as plot
+import src.draw as draw
 import math
 
 class Interface(QMainWindow):
@@ -17,12 +17,12 @@ class Interface(QMainWindow):
         transform.scale(1, -1)
         self.view.setTransform(transform)
 
-        self.plotter = plot.SegmentPlotter(self.scene)
+        self.plotter = draw.FigurePlotter(self.scene)
 
         self.background_color_label = self.findChild(QLabel, "backgroundColor")
         self.background_color = QColor(255, 255, 255)
-        self.segment_color_label = self.findChild(QLabel, "PenColor")
-        self.segment_color = QColor(0, 0, 0)
+        self.pen_color_label = self.findChild(QLabel, "PenColor")
+        self.pen_color = QColor(0, 0, 0)
 
         self.algorithm = self.findChild(QComboBox, "AlgorithmTypeBox")
         self.__setup_buttons()
@@ -75,23 +75,23 @@ class Interface(QMainWindow):
     def choose_pen_color(self):
         color_dialog = QColorDialog(self)
         if color_dialog.exec():
-            self.segment_color = color_dialog.currentColor()
-            self.segment_color_label.setStyleSheet(
+            self.pen_color = color_dialog.currentColor()
+            self.pen_color_label.setStyleSheet(
                 f"background-color: {self.segment_color.name()}"
             )
 
-    def get_circle_data(self) -> tuple[plot.Circle, bool]:
+    def get_circle_data(self) -> tuple[draw.Circle, bool]:
         try:
             center_x = float(self.circle_center_x.toPlainText())
             center_y = float(self.circle_center_y.toPlainText())
             radius = float(self.circle_radius.toPlainText())
         except ValueError:
             QMessageBox.warning(self, "Ошибка", "Некорректные данные в полях ввода окружности.")
-            return plot.Circle(), False
+            return draw.Circle(), False
 
-        return plot.Circle(QPointF(center_x, center_y), radius), True
+        return draw.Circle(QPointF(center_x, center_y), radius), True
     
-    def get_ellipse_data(self) -> tuple[plot.Ellipse, bool]:
+    def get_ellipse_data(self) -> tuple[draw.Ellipse, bool]:
         try:
             center_x = float(self.ellipse_center_x.toPlainText())
             center_y = float(self.ellipse_center_y.toPlainText())
@@ -99,37 +99,37 @@ class Interface(QMainWindow):
             small_half_axis = float(self.ellipse_small_half_axis.toPlainText())
         except ValueError:
             QMessageBox.warning(self, "Ошибка", "Некорректные данные в полях ввода эллипса")
-            return plot.Ellipse(), False
+            return draw.Ellipse(), False
 
         center = QPointF(center_x, center_y)
-        return plot.Ellipse(center, big_half_axis, small_half_axis), True
+        return draw.Ellipse(center, big_half_axis, small_half_axis), True
     
-    def get_circle_spectrum_data(self) -> tuple[plot.Spectrum, bool]:
+    def get_circle_spectrum_data(self) -> tuple[draw.Spectrum, bool]:
         try:
             step = float(self.circle_step.toPlainText())
             num_of_figures = int(self.circle_num_figures.toPlainText())
         except ValueError:
             QMessageBox.warning(self, "Ошибка", "Некорректные данные для спектра.")
-            return plot.Spectrum, False
+            return draw.Spectrum, False
         
-        return plot.Spectrum(step, num_of_figures), True
+        return draw.Spectrum(step, num_of_figures), True
     
-    def get_ellipse_spectrum_data(self) -> tuple[plot.Spectrum, bool]:
+    def get_ellipse_spectrum_data(self) -> tuple[draw.Spectrum, bool]:
         try:
             step = float(self.ellipse_step.toPlainText())
             num_of_figures = int(self.ellipse_num_figures.toPlainText())
         except ValueError:
             QMessageBox.warning(self, "Ошибка", "Некорректные данные для спектра.")
-            return plot.Spectrum, False
+            return draw.Spectrum, False
         
-        return plot.Spectrum(step, num_of_figures), True
+        return draw.Spectrum(step, num_of_figures), True
 
     def plot_circle(self):
         circle, ok = self.get_circle_data()
         if not ok:
             return
         
-        algoritm = plot.Algorithm(self.algorithm.currentIndex())
+        algoritm = draw.Algorithm(self.algorithm.currentIndex())
         self.plotter.plot(algoritm, circle, self.pen_color)
 
     def plot_ellipse(self):
@@ -137,7 +137,7 @@ class Interface(QMainWindow):
         if not ok:
             return
         
-        algoritm = plot.Algorithm(self.algorithm.currentIndex())
+        algoritm = draw.Algorithm(self.algorithm.currentIndex())
         self.plotter.plot(algoritm, ellipse, self.pen_color)
         
     def plot_circle_spectrum(self):
@@ -149,7 +149,7 @@ class Interface(QMainWindow):
         if not ok:
             return
         
-        algoritm = plot.Algorithm(self.algorithm.currentIndex())
+        algoritm = draw.Algorithm(self.algorithm.currentIndex())
         self.plotter.spectrum(algoritm, circle, spectrum, self.pen_color)
 
     def plot_ellipse_spectrum(self):
@@ -161,7 +161,7 @@ class Interface(QMainWindow):
         if not ok:
             return
         
-        algoritm = plot.Algorithm(self.algorithm.currentIndex())
+        algoritm = draw.Algorithm(self.algorithm.currentIndex())
         self.plotter.spectrum(algoritm, ellipse, spectrum, self.pen_color)
 
 
