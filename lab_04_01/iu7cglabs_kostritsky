@@ -30,7 +30,7 @@ checkall:
 	lizard -E duplicate ./src main.py
 
 format:
-	pyformat -a --remove-all-unused-imports --remove-unused-variables $(SRC_FILES)
+	pyformat -i $(SRC_FILES)
 
 report-unittesting-latest.txt:
 	./scripts/coverage.sh test_unit.py > $@
