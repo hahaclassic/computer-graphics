@@ -4,7 +4,6 @@ from PyQt6.QtGui import QColor, QTransform
 from PyQt6.QtCore import QPointF
 from PyQt6 import uic
 import src.draw as draw
-import math
 
 class Interface(QMainWindow):
     def __init__(self):
@@ -17,7 +16,8 @@ class Interface(QMainWindow):
         transform.scale(1, -1)
         self.view.setTransform(transform)
 
-        self.plotter = draw.FigurePlotter(self.scene)
+        self.circle_plotter = draw.CirclePlotter(self.scene)
+        self.ellipse_plotter = draw.EllipsePlotter(self.scene)
 
         self.background_color_label = self.findChild(QLabel, "backgroundColor")
         self.background_color = QColor(255, 255, 255)
@@ -37,8 +37,8 @@ class Interface(QMainWindow):
 
         self.ellipse_center_x = self.findChild(QTextEdit, "EllipseCenterX")
         self.ellipse_center_y = self.findChild(QTextEdit, "EllipseCenterY")
-        self.ellipse_big_half_axis = self.findChild(QTextEdit, "BigHalfAxis")
-        self.ellipse_small_half_axis = self.findChild(QTextEdit, "SmallHalfAxis")
+        self.ellipse_semi_major_axis = self.findChild(QTextEdit, "BigHalfAxis")
+        self.ellipse_semi_minor_axis = self.findChild(QTextEdit, "SmallHalfAxis")
         self.ellipse_step = self.findChild(QTextEdit, "EllipseStep")
         self.ellipse_num_figures = self.findChild(QTextEdit, "EllipseNumFigures")
 
@@ -95,14 +95,14 @@ class Interface(QMainWindow):
         try:
             center_x = float(self.ellipse_center_x.toPlainText())
             center_y = float(self.ellipse_center_y.toPlainText())
-            big_half_axis = float(self.ellipse_big_half_axis.toPlainText())
-            small_half_axis = float(self.ellipse_small_half_axis.toPlainText())
+            semi_major_axis = float(self.ellipse_semi_major_axis.toPlainText())
+            semi_minor_axis = float(self.ellipse_semi_minor_axis.toPlainText())
         except ValueError:
             QMessageBox.warning(self, "Ошибка", "Некорректные данные в полях ввода эллипса")
             return draw.Ellipse(), False
 
         center = QPointF(center_x, center_y)
-        return draw.Ellipse(center, big_half_axis, small_half_axis), True
+        return draw.Ellipse(center, semi_major_axis, semi_minor_axis), True
     
     def get_circle_spectrum_data(self) -> tuple[draw.Spectrum, bool]:
         try:
@@ -130,7 +130,7 @@ class Interface(QMainWindow):
             return
         
         algoritm = draw.Algorithm(self.algorithm.currentIndex())
-        self.plotter.plot(algoritm, circle, self.pen_color)
+        self.circle_plotter.plot(algoritm, circle, self.pen_color)
 
     def plot_ellipse(self):
         ellipse, ok = self.get_ellipse_data()
@@ -138,7 +138,7 @@ class Interface(QMainWindow):
             return
         
         algoritm = draw.Algorithm(self.algorithm.currentIndex())
-        self.plotter.plot(algoritm, ellipse, self.pen_color)
+        self.ellipse_plotter.plot(algoritm, ellipse, self.pen_color)
         
     def plot_circle_spectrum(self):
         circle, ok = self.get_circle_data()
@@ -150,7 +150,7 @@ class Interface(QMainWindow):
             return
         
         algoritm = draw.Algorithm(self.algorithm.currentIndex())
-        self.plotter.spectrum(algoritm, circle, spectrum, self.pen_color)
+        self.circle_plotter.spectrum(algoritm, circle, spectrum, self.pen_color)
 
     def plot_ellipse_spectrum(self):
         ellipse, ok = self.get_ellipse_data()
@@ -162,6 +162,6 @@ class Interface(QMainWindow):
             return
         
         algoritm = draw.Algorithm(self.algorithm.currentIndex())
-        self.plotter.spectrum(algoritm, ellipse, spectrum, self.pen_color)
+        self.ellipse_plotter.spectrum(algoritm, ellipse, spectrum, self.pen_color)
 
 

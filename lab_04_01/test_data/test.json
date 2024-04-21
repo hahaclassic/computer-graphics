@@ -1,0 +1,60 @@
+[
+    {
+        "description": "Построение окружности с помощью канонического уравнения",
+        "cmd": [
+            {
+                "type": "circle",
+                "algorithm": "canonical",
+                "circle_data": {
+                    "center_x": 0,
+                    "center_y": 0,
+                    "radius": 100
+                }
+            }
+        ]
+    },
+    {
+        "description": "Сравнение качества построения эллипсов с помощью алгоритма брезенхема и средней точки (брезенхем снизу)",
+        "cmd": [
+            {
+                "type": "ellipse",
+                "algorithm": "bresenham",
+                "ellipse_data": {
+                    "center_x": 0,
+                    "center_y": 0,
+                    "semi_major_axis": 200,
+                    "semi_minor_axis": 100
+                }
+            },
+            {
+                "type": "ellipse",
+                "algorithm": "midpoint",
+                "ellipse_data": {
+                    "center_x": 0,
+                    "center_y": 210,
+                    "semi_major_axis": 200,
+                    "semi_minor_axis": 100
+                }
+            }
+        ]
+    },
+    {
+        "description": "Построение спектра с помощью алгоритма Брезенхема",
+        "cmd": [
+            {
+                "type": "ellipse_spectrum",
+                "algorithm": "bresenham",
+                "ellipse_data": {
+                    "center_x": 0,
+                    "center_y": 0,
+                    "semi_major_axis": 200,
+                    "semi_minor_axis": 100
+                },
+                "spectrum": {
+                    "step": 10,
+                    "num_figures": 10
+                }
+            }
+        ]
+    }
+]
