@@ -185,7 +185,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>420</y>
+           <y>330</y>
            <width>300</width>
            <height>31</height>
           </rect>
@@ -204,7 +204,7 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>570</y>
+           <y>560</y>
            <width>300</width>
            <height>31</height>
           </rect>
@@ -223,6 +223,45 @@
          </property>
          <property name="text">
           <string>Очистить плоскость</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_2">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>30</y>
+           <width>261</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Время выполнения</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="timeLabel">
+         <property name="geometry">
+          <rect>
+           <x>30</x>
+           <y>70</y>
+           <width>211</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>0c</string>
+         </property>
+        </widget>
+        <widget class="QCheckBox" name="checkBox">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>430</y>
+           <width>161</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>С задержкой</string>
          </property>
         </widget>
        </widget>
@@ -250,7 +289,7 @@
      <x>0</x>
      <y>0</y>
      <width>1200</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">

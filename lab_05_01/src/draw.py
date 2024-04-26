@@ -1,355 +1,178 @@
-from abc import ABC, abstractmethod
-from PyQt6.QtCore import QPointF, QPoint
-from PyQt6.QtWidgets import QGraphicsScene
-from PyQt6.QtGui import QColor
-from enum import IntEnum
-import math
+from dataclasses import dataclass
+import time
+
+from PyQt6.QtWidgets import QMainWindow, QMessageBox, \
+    QPushButton, QColorDialog, QLabel, QGraphicsView, QGraphicsScene, QTextEdit, QComboBox, QCheckBox
+from PyQt6.QtGui import QColor, QTransform, QPolygon
+from PyQt6.QtCore import Qt, QChildEvent, QPointF, QPoint, QLine
+
+EPS = 1e-07
+
+@dataclass
+class Point:
+    x: int
+    y: int
+
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
+@dataclass
+class Node:
+    x: float
+    dx: float
+    dy: int
+
+    def __init__(self, x=0, dx=0, dy=0):
+        self.x = x
+        self.dx = dx
+        self.dy = dy
 
 
-class Circle:
-    def __init__(self, center: QPointF, radius: float) -> None:
-        self.radius = radius
-        self.center = center
+def draw_line(canvas, ps, pe, colour):
+    x_beg = ps.x + 0.5
+    x_end = pe.x + 0.5
+    y = ps.y
+    canvas.create_line(x_beg, y, x_end, y, fill=colour)
 
 
-class Ellipse:
-    def __init__(self, center: QPointF, semi_major_axis: float, semi_minor_axis: float) -> None:
-        self.center = center
-        self.semi_minor_axis = semi_minor_axis
-        self.semi_major_axis = semi_major_axis
+def draw_edges(canvas, edges):
+    for i in range(len(edges)):
+        canvas.create_line(edges[i][0].x, edges[i][0].y,
+                           edges[i][1].x, edges[i][1].y, fill="black")
 
 
-class Spectrum:
-    def __init__(self, step: float, num_of_figures: int) -> None:
-        self.step = step
-        self.num_of_figures = num_of_figures
-
-
-class Algorithm(IntEnum):
-    CANONICAL = 0
-    PARAMETRIC = 1
-    BRESENHAM = 2
-    MIDPOINT = 3
-    BUILD_IN = 4
-
-
-class Plotter(ABC):
-    def __init__(self, scene: QGraphicsScene) -> None:
-        self.scene = scene
-
-        self.algorithms = {
-            Algorithm.CANONICAL: self.canonical,
-            Algorithm.PARAMETRIC: self.parametric,
-            Algorithm.BRESENHAM: self.bresenham,
-            Algorithm.MIDPOINT: self.midpoint,
-            Algorithm.BUILD_IN: self.build_in
-        }
-
-    @abstractmethod
-    def plot(self, algo_type: Algorithm, circle: Circle, color: QColor) -> None:
-        pass
-
-    @abstractmethod
-    def spectrum(self, algo_type: Algorithm, circle: Circle,
-                 spectrum: Spectrum, color: QColor) -> None:
-        pass
-
-    @abstractmethod
-    def canonical(self, circle: Circle) -> list[QPoint]:
-        pass
-
-    @abstractmethod
-    def parametric(self, circle: Circle) -> list[QPoint]:
-        pass
-
-    @abstractmethod
-    def bresenham(self, circle: Circle) -> list[QPoint]:
-        pass
-
-    @abstractmethod
-    def midpoint(self, circle: Circle) -> list[QPoint]:
-        pass
-
-    @abstractmethod
-    def build_in(self, circle: Circle, color: QColor) -> None:
-        pass
-
-
-class CirclePlotter(Plotter):
-    def __init__(self, scene: QGraphicsScene) -> None:
-        super().__init__(scene)
-
-    def plot(self, algo_type: Algorithm, circle: Circle, color: QColor) -> None:
-        if algo_type not in self.algorithms or not isinstance(circle, Circle):
-            return
-
-        if algo_type != Algorithm.BUILD_IN:
-            points = self.algorithms[algo_type](circle)
-            draw_points(self.scene, points, color)
-        else:
-            self.build_in(circle, color)
-
-    def spectrum(self, algo_type: Algorithm, circle: Circle, spectrum: Spectrum, color: QColor) -> None:
-        if algo_type not in self.algorithms or not isinstance(circle, Circle):
-            return
-
-        for _ in range(0, spectrum.num_of_figures):
-            self.plot(algo_type, circle, color)
-            circle.radius += spectrum.step
-
-    def canonical(self, circle: Circle) -> list[QPoint]:
-        points: list[QPoint] = []
-
-        start = int(circle.center.x())
-        end = start + int(circle.radius / math.sqrt(2)) + 1
-
-        for x in range(start, end):
-            y = math.sqrt(circle.radius**2 -
-                          (x - circle.center.x())**2) + circle.center.y()
-            add_symmetrical_points(points, QPointF(x, y), circle.center, True)
-
-        return points
-
-    def parametric(self, circle: Circle) -> list[QPoint]:
-        points: list[QPoint] = []
-        step = 1 / circle.radius
-
-        t = 0.0
-        end = math.pi / 4 + step
-        while t < end:
-            x = circle.center.x() + circle.radius * math.cos(t)
-            y = circle.center.y() + circle.radius * math.sin(t)
-            t += step
-            add_symmetrical_points(points, QPointF(x, y), circle.center, True)
-
-        return points
-
-    def bresenham(self, circle: Circle) -> list[QPoint]:
-        points: list[QPoint] = []
-        x, y = 0, circle.radius
-        delta = 2 * (1 - circle.radius)
-
-        add_symmetrical_points(points, circle.center +
-                               QPointF(x, y), circle.center, True)
-        while x < y:
-            if delta <= 0:
-                delta_temp = 2 * (delta + y) - 1
-                x += 1
-                if delta_temp >= 0:
-                    delta += 2 * (x - y + 1)
-                    y -= 1
-                else:
-                    delta += 2 * x + 1
-
+# figures - полигон фигур или массив всех замкнутых фигур
+def make_edges_list(figures):
+    edges = list()
+    for fig in figures:
+        num_points = len(fig)
+        for i in range(num_points):
+            if i + 1 > num_points - 1:
+                edges.append(QLine(fig[-1], fig[0]))
             else:
-                delta_temp = 2 * (delta - x) - 1
-                y -= 1
-                if delta_temp < 0:
-                    delta += 2 * (x - y + 1)
-                    x += 1
-                else:
-                    delta -= 2 * y - 1
-            add_symmetrical_points(
-                points, circle.center + QPointF(x, y), circle.center, True)
+                edges.append(QLine(fig[i], fig[i + 1]))
 
-        return points
-
-    def midpoint(self, circle: Circle) -> list[QPoint]:
-        points: list[QPoint] = []
-        x, y = circle.radius, 0
-        delta = 1 - circle.radius
-
-        add_symmetrical_points(points, circle.center +
-                               QPointF(x, y), circle.center, True)
-        while x > y:
-            y += 1
-            if delta > 0:
-                x -= 1
-                delta -= 2 * x - 2
-            delta += 2 * y + 3
-            add_symmetrical_points(
-                points, circle.center + QPointF(x, y), circle.center, True)
-
-        return points
-
-    def build_in(self, circle: Circle, color: QColor) -> None:
-        self.scene.addEllipse(
-            circle.center.x() - circle.radius,
-            circle.center.y() - circle.radius,
-            circle.radius * 2,
-            circle.radius * 2,
-            color
-        )
+    return edges
 
 
-class EllipsePlotter(Plotter):
-    def __init__(self, scene: QGraphicsScene) -> None:
-        super().__init__(scene)
+def sign(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
 
-    def plot(self, algo_type: Algorithm, ellipse: Ellipse, color: QColor) -> None:
-        if algo_type not in self.algorithms or not isinstance(ellipse, Ellipse):
-            return
 
-        if algo_type != Algorithm.BUILD_IN:
-            points = self.algorithms[algo_type](ellipse)
-            draw_points(self.scene, points, color)
-        else:
-            self.build_in(ellipse, color)
+def find_extrimum_Y_figures(figures):
+    yMin = figures[0][0].y()
+    yMax = figures[0][0].y()
+    for fig in figures:
+        for p in fig:
+            if p.y() > yMax:
+                yMax = p.y()
+            if p.y() < yMin:
+                yMin = p.y()
+    return yMin, yMax
 
-    def spectrum(self, algo_type: Algorithm, ellipse: Ellipse,
-                 spectrum: Spectrum, color: QColor) -> None:
+def make_link_list(Ymin=0, Ymax=0):
+    link_list = dict()
+    for i in range(round(Ymax), round(Ymin), -1):
+        link_list.update({i: list()})
+    return link_list
 
-        if algo_type not in self.algorithms or not isinstance(ellipse, Ellipse):
-            return
+def make_insert_thm(edges: list[QLine], link_list):
+    for edge in edges:
+        x1 = edge.x1()
+        y1 = edge.y1()
+        x2 = edge.x2()
+        y2 = edge.y2()
 
-        for _ in range(0, spectrum.num_of_figures):
-            self.plot(algo_type, ellipse, color)
-            ellipse.semi_major_axis += spectrum.step
-            ellipse.semi_minor_axis += spectrum.step
+        len_x = abs(int(x2) - int(x1))
+        len_y = abs(int(y2) - int(y1))
 
-    def canonical(self, ellipse: Ellipse) -> list[QPoint]:
-        points: list[QPoint] = []
-        major, minor = ellipse.semi_major_axis, ellipse.semi_minor_axis
-        center_x, center_y = ellipse.center.x(), ellipse.center.y()
+        if len_y != 0:
+            dx = ((x2 > x1) - (x2 < x1)) * len_x / len_y
+            dy = ((y2 > y1) - (y2 < y1))
 
-        limit = int(center_x + major / math.sqrt(1 + minor**2 / major**2))
+            nmax = max(y1, y2)
 
-        for x in range(int(center_x), limit + 1):
-            y = math.sqrt(major**2 * minor**2 - (x - center_x) ** 2
-                          * minor**2) / major + center_y
-            add_symmetrical_points(points, QPointF(x, y),
-                                   ellipse.center, False)
+            x = x1 + dx / 2
+            y = y2 + dy / 2
 
-        limit = int(center_y + minor / math.sqrt(1 + major**2 / minor**2))
+            for j in range(len_y):
+                sotYdr = link_list.get(nmax)
+                sotYdr.append(Node(x1))
+                x += dx
+                y += dy
 
-        for y in range(limit, int(center_y) - 1, -1):
-            x = math.sqrt(major**2 * minor**2 - (y - center_y) ** 2
-                          * major**2) / minor + center_x
-            add_symmetrical_points(points, QPointF(x, y),
-                                   ellipse.center, False)
 
-        return points
+def update_y_group(y_groups, edge: QLine):
+        x_start, y_start = edge.x1(), edge.y2()
+        x_start, y_end = edge.x2(), edge.y2()
+        if y_start > y_end:
+            x_end, x_start = x_start, x_end
+            y_end, y_start = y_start, y_end
 
-    def parametric(self, ellipse: Ellipse) -> list[QPoint]:
-        points: list[QPoint] = []
-        step = 1 / ellipse.semi_major_axis
-        if ellipse.semi_major_axis < ellipse.semi_minor_axis:
-            step = 1 / ellipse.semi_minor_axis
-
-        t = 0.0
-        end = math.pi / 2 + step
-        while t < end:
-            x = ellipse.center.x() + ellipse.semi_major_axis * math.cos(t)
-            y = ellipse.center.y() + ellipse.semi_minor_axis * math.sin(t)
-            t += step
-            add_symmetrical_points(points, QPointF(x, y),
-                                   ellipse.center, False)
-
-        return points
-
-    def bresenham(self, ellipse: Ellipse) -> list[QPoint]:
-        points: list[QPoint] = []
-        minor, major = ellipse.semi_minor_axis, ellipse.semi_major_axis
-        x, y = 0, minor
-        delta = minor**2 - major**2 * (2 * minor + 1)
-
-        add_symmetrical_points(points, ellipse.center +
-                               QPointF(x, y), ellipse.center, False)
-
-        while y > 0:
-            if delta <= 0:
-                delta_temp = 2 * delta + major**2 * (2 * y - 1)
-                x += 1
-                delta += minor**2 * (2 * x + 1)
-                if delta_temp >= 0:
-                    y -= 1
-                    delta += major**2 * (-2 * y + 1)
-
+        y_proj = abs(y_end - y_start)
+        if y_proj != 0:
+            x_step = -(x_end - x_start) / y_proj
+            if y_end not in y_groups:
+                y_groups[y_end] = [Node(x_end, x_step, y_proj)]
             else:
-                delta_temp = 2 * delta + minor**2 * (-2 * x - 1)
-                y -= 1
-                delta += major**2 * (-2 * y + 1)
-                if delta_temp < 0:
-                    x += 1
-                    delta += minor**2 * (2 * x + 1)
-
-            add_symmetrical_points(
-                points, ellipse.center + QPointF(x, y), ellipse.center, False)
-
-        return points
-
-    def midpoint(self, ellipse: Ellipse) -> list[QPoint]:
-        points: list[QPoint] = []
-        minor, major = ellipse.semi_minor_axis, ellipse.semi_major_axis
-        x, y = 0, minor
-
-        delta = minor**2 - major**2 * minor + 0.25 * major * major
-        dx, dy = 2 * minor**2 * x, 2 * major**2 * y
-
-        while dx < dy:
-            add_symmetrical_points(
-                points, ellipse.center + QPointF(x, y), ellipse.center, False)
-            x += 1
-            dx += 2 * minor**2
-
-            if delta >= 0:
-                y -= 1
-                dy -= 2 * major**2
-                delta -= dy
-            delta += dx + minor**2
-
-        delta = minor**2 * (x + 0.5)**2 + major**2 * \
-            (y - 1)**2 - major**2 * minor**2
-
-        while y >= 0:
-            add_symmetrical_points(
-                points, ellipse.center + QPointF(x, y), ellipse.center, False)
-            y -= 1
-            dy -= 2 * major**2
-
-            if delta <= 0:
-                x += 1
-                dx += 2 * minor**2
-                delta += dx
-            delta -= dy - major**2
-
-        return points
-
-    def build_in(self, ellipse: Ellipse, color: QColor) -> None:
-        self.scene.addEllipse(
-            ellipse.center.x() - ellipse.semi_major_axis,
-            ellipse.center.y() - ellipse.semi_minor_axis,
-            ellipse.semi_major_axis * 2,
-            ellipse.semi_minor_axis * 2,
-            color
-        )
+                y_groups[y_end].append(Node(x_end, x_step, y_proj))
 
 
-def draw_points(scene: QGraphicsScene, points: list[QPoint], color: QColor) -> None:
-    for point in points:
-        scene.addEllipse(point.x(), point.y(), 0.5, 0.5, color)
+def iterator_active_edges(active_edges):
+    i = 0
+    while i < len(active_edges):
+        active_edges[i].x += active_edges[i].dx
+        active_edges[i].dy -= 1
+        if active_edges[i].dy < 1:
+            active_edges.pop(i) # удаляем как в стеке LIFO - размерность списка n x 4, бывают случаи когда нечетное в этом случае не учитвается
+        else:
+            i += 1
 
 
-def add_symmetrical_points(points: list[QPoint], point: QPointF | QPoint,
-                           center: QPointF | QPoint, is_circle: bool):
+def add_active_edges(y_groups, active_edges: list, y):
+    if y in y_groups:
+        for y_group in y_groups.get(y):
+            active_edges.append(y_group)
+    active_edges.sort(key=lambda edge: edge.x)
 
-    if isinstance(center, QPointF):
-        center = center.toPoint()
-    if isinstance(point, QPointF):
-        point = point.toPoint()
-    center_x, center_y = center.x(), center.y()
-    x, y = point.x(), point.y()
 
-    points.extend([
-        point,
-        QPoint(2*center_x-x, y),
-        QPoint(x, 2*center_y-y),
-        QPoint(2*center_x-x, 2*center_y-y),
-    ])
-    if is_circle:
-        points.extend([
-            QPoint(y + center_x - center_y, x + center_y - center_x),
-            QPoint(-y + center_x + center_y, x + center_y - center_x),
-            QPoint(y + center_x - center_y, -x + center_y + center_x),
-            QPoint(-y + center_x + center_y, -x + center_y + center_x)
-        ])
+def draw_act(canvas, active_edges, y, color):
+    len_edge = len(active_edges)
+    for i in range(0, len_edge - 1, 2):
+        draw_line(canvas, QLine(active_edges[i].x, y, active_edges[i + 1].x, y), color)
+
+def CAP_algorithm_with_ordered_list_of_edges(canvas, figures: list, color: QColor, delay: float):
+    edges = make_edges_list(figures)
+
+    ymin, ymax = find_extrimum_Y_figures(figures)
+    y_groups = make_link_list(ymin, ymax)
+        
+    for edge in edges:
+        update_y_group(y_groups, edge)
+
+    y_end = ymax
+    y_start = ymin
+    active_edges = []
+    while y_end > y_start:
+        iterator_active_edges(active_edges)
+        add_active_edges(y_groups, active_edges, y_end)
+
+        draw_act(canvas, active_edges, y_end, color)
+        y_end -= 1
+        if delay > EPS:
+            time.sleep(delay)
+    draw_edges(canvas, edges, color)
+
+
+def draw_line(scene: QGraphicsScene, line: QLine, color: QColor) -> None:
+    scene.addLine(line.toLineF(), color)
+
+def draw_edges(scene: QGraphicsScene, edges: list[QLine], color: QColor) -> None:
+    for edge in edges:
+        draw_line(scene, edge, color)
