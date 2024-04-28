@@ -1,10 +1,8 @@
 import pytest
 import json
-import time
-from PyQt6.QtWidgets import QTabWidget
 from src.interface import Interface
-from PyQt6.QtTest import QTest
-from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPolygon
+from PyQt6.QtCore import QPoint
 
 TEST_FILE = "./test_data/test.json"
 RESULT_DIR = "./results/"
@@ -17,7 +15,7 @@ def interface(qtbot):
     qtbot.addWidget(interface)
     return interface
 
-def test(interface: Interface, qtbot):
+def test(interface: Interface):
 
     with open(TEST_FILE, "r") as f:
         tests = json.load(f)
@@ -30,10 +28,10 @@ def test(interface: Interface, qtbot):
         elapsed_time = 0.0
 
         for _ in range(TEST_REPEATS):
-            press_button(interface, qtbot, "reset")
-            elapsed_time += run_test(interface, qtbot, test)
+            interface.clear()
+            elapsed_time += run_test(interface, test)
 
-        test_time = (elapsed_time / TEST_REPEATS) * 1000
+        test_time = (elapsed_time / TEST_REPEATS)
         report.write(f"< test: {idx + 1}, time: {test_time:.4f} >\n")
 
         path = RESULT_DIR + "test" + str(idx + 1)
@@ -48,113 +46,26 @@ def test(interface: Interface, qtbot):
     report.close()
     
 
-def run_test(interface: Interface, qtbot, test) -> float:
+def run_test(interface: Interface, test) -> float:
 
-    elapsed_time = 0.0
-    for action in test["cmd"]:
-        clear_fields(interface)
-        parse_fields(interface, action)
+    interface.figures = parse_figures_data(test["figures"])
+    interface.paint_shape()
 
-        start = time.monotonic()
-        press_button(interface, qtbot, action["type"])
-        end = time.monotonic()
-
-        elapsed_time += (end - start)
+    label_string = interface.time_label.text()
+    elapsed_time = float(label_string.split()[0])
 
     return elapsed_time
 
-def press_button(interface: Interface, qtbot, operation_type: str):
-    match operation_type:
-        case "circle":
-            qtbot.mouseClick(interface.plot_circle_button, Qt.MouseButton.LeftButton)
-        case "circle_spectrum":
-            qtbot.mouseClick(interface.plot_circle_spectrum_button, Qt.MouseButton.LeftButton)
-        case "ellipse":
-            qtbot.mouseClick(interface.plot_ellipse_button, Qt.MouseButton.LeftButton)
-        case "ellipse_spectrum":
-            qtbot.mouseClick(interface.plot_ellipse_spectrum_button, Qt.MouseButton.LeftButton)
-        case "reset":
-            qtbot.mouseClick(interface.clear_button, Qt.MouseButton.LeftButton)
 
-def parse_fields(interface: Interface, action):
-    if "type" not in action or "algorithm" not in action:
-        return
-    
-    tab_widget = interface.findChild(QTabWidget, "tabWidget")
+def parse_figures_data(json_figures) -> list[QPolygon]:
 
-    parse_figure_data(interface, action, tab_widget)
-    parse_spectrum_data(interface, action, tab_widget)
+    figures = []
 
-    match str(action["algorithm"]):
-        case "canonical":
-            interface.algorithm.setCurrentIndex(0)
-        case "parametric":
-            interface.algorithm.setCurrentIndex(1)
-        case "bresenham":
-            interface.algorithm.setCurrentIndex(2)
-        case "midpoint":
-            interface.algorithm.setCurrentIndex(3)
-        case "build_in":
-            interface.algorithm.setCurrentIndex(4)
+    for json_figure in json_figures:
+        figure = QPolygon()
+        for point in json_figure:
+            x, y = int(point["x"]), int(point["y"])
+            figure.append(QPoint(x, y))
+        figures.append(figure)
 
-def parse_figure_data(interface: Interface, action, tab_widget: QTabWidget):
-    action_type = str(action["type"])
-
-    if action_type == "circle" or action_type == "circle_spectrum":
-        tab_widget.setCurrentIndex(0)
-        data = action["circle_data"]
-
-        if "center_x" in data:
-            QTest.keyClicks(interface.circle_center_x, str(data["center_x"]))
-        if "center_y" in data:
-            QTest.keyClicks(interface.circle_center_y, str(data["center_y"]))
-        if "radius" in data:
-            QTest.keyClicks(interface.circle_radius, str(data["radius"]))
-
-    elif action_type == "ellipse" or action_type == "ellipse_spectrum":
-        tab_widget.setCurrentIndex(1)
-        data = action["ellipse_data"]
-
-        if "center_x" in data:
-            QTest.keyClicks(interface.ellipse_center_x, str(data["center_x"]))
-        if "center_y" in data:
-            QTest.keyClicks(interface.ellipse_center_y, str(data["center_y"]))
-        if "semi_major_axis" in data:
-            QTest.keyClicks(interface.ellipse_semi_major_axis, str(data["semi_major_axis"]))
-        if "semi_minor_axis" in data:
-            QTest.keyClicks(interface.ellipse_semi_minor_axis, str(data["semi_minor_axis"])) 
-
-def parse_spectrum_data(interface: Interface, action, tab_widget: QTabWidget):
-    action_type = str(action["type"])
-    if action_type == "circle_spectrum":
-        data = action["spectrum"]
-        tab_widget.setCurrentIndex(0)
-
-        if "step" in data:
-            QTest.keyClicks(interface.circle_step, str(data["step"]))
-        if "num_figures" in data:
-            QTest.keyClicks(interface.circle_num_figures, str(data["num_figures"]))
-
-    elif action_type == "ellipse_spectrum":
-        data = action["spectrum"]
-        tab_widget.setCurrentIndex(1)
-
-        if "step" in data:
-            QTest.keyClicks(interface.ellipse_step, str(data["step"]))
-        if "num_figures" in data:
-            QTest.keyClicks(interface.ellipse_num_figures, str(data["num_figures"]))
-
-  
-def clear_fields(interface: Interface):
-    interface.circle_center_x.clear()
-    interface.circle_center_y.clear()
-    interface.circle_radius.clear()
-    interface.circle_num_figures.clear()
-    interface.circle_step.clear()
-    interface.ellipse_center_x.clear()
-    interface.ellipse_center_y.clear()
-    interface.ellipse_semi_major_axis.clear()
-    interface.ellipse_semi_minor_axis.clear()
-    interface.ellipse_num_figures.clear()
-    interface.ellipse_step.clear()
-    
+    return figures

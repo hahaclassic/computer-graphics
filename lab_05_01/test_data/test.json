@@ -1,60 +1,41 @@
 [
     {
-        "description": "Построение окружности с помощью канонического уравнения",
-        "cmd": [
-            {
-                "type": "circle",
-                "algorithm": "canonical",
-                "circle_data": {
-                    "center_x": 0,
-                    "center_y": 0,
-                    "radius": 100
-                }
-            }
+        "description": "Закрашивание фигуры без пересекающихся ребер. (треугольник)",
+        "figures": [
+            [
+                {"x": 400, "y": 400},
+                {"x": 500, "y": 600},
+                {"x": 600, "y": 400}
+            ]
         ]
     },
     {
-        "description": "Сравнение качества построения эллипсов с помощью алгоритма брезенхема и средней точки (брезенхем снизу)",
-        "cmd": [
-            {
-                "type": "ellipse",
-                "algorithm": "bresenham",
-                "ellipse_data": {
-                    "center_x": 0,
-                    "center_y": 0,
-                    "semi_major_axis": 200,
-                    "semi_minor_axis": 100
-                }
-            },
-            {
-                "type": "ellipse",
-                "algorithm": "midpoint",
-                "ellipse_data": {
-                    "center_x": 0,
-                    "center_y": 210,
-                    "semi_major_axis": 200,
-                    "semi_minor_axis": 100
-                }
-            }
+        "description": "Закрашивание фигуры, ребра которой пересекаются. (звезда)",
+        "figures": [
+            [
+                {"x": 320, "y": 320},
+                {"x": 400, "y": 520},
+                {"x": 480, "y": 320},
+                {"x": 280, "y": 440},
+                {"x": 520, "y": 440}
+            ]
         ]
     },
     {
-        "description": "Построение спектра с помощью алгоритма Брезенхема",
-        "cmd": [
-            {
-                "type": "ellipse_spectrum",
-                "algorithm": "bresenham",
-                "ellipse_data": {
-                    "center_x": 0,
-                    "center_y": 0,
-                    "semi_major_axis": 200,
-                    "semi_minor_axis": 100
-                },
-                "spectrum": {
-                    "step": 10,
-                    "num_figures": 10
-                }
-            }
+        "description": "Закрашивание двух непересекающихся фигур.",
+        "figures": [
+            [
+                {"x": 600, "y": 600},
+                {"x": 700, "y": 800},
+                {"x": 800, "y": 600}
+            ],
+            [
+                {"x": 320, "y": 320},
+                {"x": 400, "y": 520},
+                {"x": 480, "y": 320},
+                {"x": 280, "y": 440},
+                {"x": 520, "y": 440}
+            ]
         ]
     }
 ]
