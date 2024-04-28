@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QMainWindow, QMessageBox, \
-    QPushButton, QColorDialog, QLabel, QGraphicsView, QGraphicsScene, QTextEdit, QComboBox, QCheckBox
+    QPushButton, QColorDialog, QLabel, QGraphicsView, QGraphicsScene, QCheckBox
 from PyQt6.QtGui import QColor, QTransform, QPolygon
-from PyQt6.QtCore import Qt, QChildEvent, QPointF, QPoint, QLine
+from PyQt6.QtCore import Qt, QPointF, QPoint, QLine
 from PyQt6 import uic
 import src.draw as draw
 import time
