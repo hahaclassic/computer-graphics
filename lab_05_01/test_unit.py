@@ -1,74 +1,40 @@
 import pytest
-from PyQt6.QtCore import QPointF, QPoint
+from PyQt6.QtCore import QPoint, QLine
+from PyQt6.QtGui import QPolygon
 import src.draw as draw
 
 EPS = 1e-04
 
 @pytest.fixture
-def circle():
-    return draw.Circle(QPointF(0, 0), 3)
+def figures() -> list[QPolygon]:
+    figures = [QPolygon(), QPolygon()]
+    figures[0].append(QPoint(600, 600))
+    figures[0].append(QPoint(700, 800))
+    figures[0].append(QPoint(800, 600))
+    figures[1].append(QPoint(320, 320))
+    figures[1].append(QPoint(400, 520))
+    figures[1].append(QPoint(480, 320))
+    figures[1].append(QPoint(280, 440))
+    figures[1].append(QPoint(520, 440))
+    return figures
 
-@pytest.fixture
-def ellipse():
-    return draw.Ellipse(QPointF(0, 0), 4, 2)
+def test_find_extremes(figures):
+    y_min, y_max = draw.find_extremes(figures)
 
-@pytest.fixture
-def circle_plotter():
-    return draw.CirclePlotter(None)
+    assert y_min == 320
+    assert y_max == 800
 
-@pytest.fixture
-def ellipse_plotter():
-    return draw.EllipsePlotter(None)
+def test_create_edges_list(figures):
+    edges = draw.create_edges_list(figures)
 
-
-def test_circle_canonical(circle_plotter, circle):
-    expected_points = [
-        QPoint(0, 3), QPoint(0, 3), QPoint(0, -3), QPoint(0, -3),
-        QPoint(3, 0), QPoint(-3, 0), QPoint(3, 0), QPoint(-3, 0),
-        QPoint(1, 3), QPoint(-1, 3), QPoint(1, -3), QPoint(-1, -3),
-        QPoint(3, 1), QPoint(-3, 1), QPoint(3, -1), QPoint(-3, -1),
-        QPoint(2, 2), QPoint(-2, 2), QPoint(2, -2), QPoint(-2, -2),
-        QPoint(2, 2), QPoint(-2, 2), QPoint(2, -2), QPoint(-2, -2)
-    ] 
-    points = circle_plotter.canonical(circle)
-    
-    assert points == expected_points
-
-def test_ellipse_canonical(ellipse_plotter, ellipse):
-    expected_points = [
-       QPoint(0, 2), QPoint(0, 2), QPoint(0, -2), QPoint(0, -2), 
-       QPoint(1, 2), QPoint(-1, 2), QPoint(1, -2), QPoint(-1, -2), 
-       QPoint(2, 2), QPoint(-2, 2), QPoint(2, -2), QPoint(-2, -2), 
-       QPoint(3, 1), QPoint(-3, 1), QPoint(3, -1), QPoint(-3, -1), 
-       QPoint(4, 0), QPoint(-4, 0), QPoint(4, 0), QPoint(-4, 0)
-    ] 
-    points = ellipse_plotter.canonical(ellipse)
-    
-    assert points == expected_points
-
-def test_circle_bresenham(circle_plotter, circle):
-    expected_points = [
-        QPoint(0, 3), QPoint(0, 3), QPoint(0, -3), QPoint(0, -3),
-        QPoint(3, 0), QPoint(-3, 0), QPoint(3, 0), QPoint(-3, 0), 
-        QPoint(1, 3), QPoint(-1, 3), QPoint(1, -3), QPoint(-1, -3), 
-        QPoint(3, 1), QPoint(-3, 1), QPoint(3, -1), QPoint(-3, -1), 
-        QPoint(2, 2), QPoint(-2, 2), QPoint(2, -2), QPoint(-2, -2), 
-        QPoint(2, 2), QPoint(-2, 2), QPoint(2, -2), QPoint(-2, -2)
-    ] 
-    points = circle_plotter.bresenham(circle)
-    
-    assert points == expected_points
-
-def test_ellipse_bresenham(ellipse_plotter, ellipse):
-    expected_points = [
-        QPoint(0, 2), QPoint(0, 2), QPoint(0, -2), QPoint(0, -2), 
-        QPoint(1, 2), QPoint(-1, 2), QPoint(1, -2), QPoint(-1, -2), 
-        QPoint(2, 2), QPoint(-2, 2), QPoint(2, -2), QPoint(-2, -2), 
-        QPoint(3, 2), QPoint(-3, 2), QPoint(3, -2), QPoint(-3, -2), 
-        QPoint(4, 1), QPoint(-4, 1), QPoint(4, -1), QPoint(-4, -1), 
-        QPoint(5, 0), QPoint(-5, 0), QPoint(5, 0), QPoint(-5, 0)
-    ] 
-    points = ellipse_plotter.bresenham(ellipse)
-    
-    assert points == expected_points
-
+    expected = [
+        QLine(QPoint(600, 600), QPoint(700, 800)),
+        QLine(QPoint(700, 800), QPoint(800, 600)),
+        QLine(QPoint(800, 600), QPoint(600, 600)),
+        QLine(QPoint(320, 320), QPoint(400, 520)),
+        QLine(QPoint(400, 520), QPoint(480, 320)),
+        QLine(QPoint(480, 320), QPoint(280, 440)),
+        QLine(QPoint(280, 440), QPoint(520, 440)),
+        QLine(QPoint(520, 440), QPoint(320, 320)),
+    ]
+    assert edges == expected
