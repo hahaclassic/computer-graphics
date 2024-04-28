@@ -5,6 +5,7 @@ from PyQt6.QtCore import QLine
 
 EPS = 1e-07
 
+
 class EdgeInfoItem:
     def __init__(self, x: int, dx: float, dy: int):
         self.x = x
@@ -12,15 +13,14 @@ class EdgeInfoItem:
         self.dy = dy
 
 
-def fill_figures(scene: QGraphicsScene, figures: list[QPolygon], 
-                color: QColor, delay: float) -> None:
-    """
-        A filling algorithm with an ordered list of edges (using a list active edges)
-    """
+def fill_figures(scene: QGraphicsScene,
+                 figures: list[QPolygon], color: QColor, delay: float) -> None:
+    """A filling algorithm with an ordered list of edges (using a list active
+    edges)"""
     edges = create_edges_list(figures)
     y_min, y_max = find_extremes(figures)
     y_groups = create_y_groups(y_min, y_max)
-        
+
     for edge in edges:
         update_y_group(y_groups, edge)
 
@@ -81,7 +81,7 @@ def update_y_group(y_groups: dict, edge: QLine) -> None:
     y_diff = abs(y_end - y_start)
     if y_diff == 0:
         return
-    
+
     x_step = -(x_end - x_start) / y_diff
     if y_end not in y_groups:
         y_groups[y_end] = [EdgeInfoItem(x_end, x_step, y_diff)]
@@ -103,16 +103,15 @@ def update_active_edges(active_edges: list[EdgeInfoItem]) -> None:
 def add_active_edges(y_groups: dict, active_edges: list[EdgeInfoItem], y: int) -> None:
     if y not in y_groups:
         return
-    
+
     for y_group in y_groups[y]:
         active_edges.append(y_group)
     active_edges.sort(key=lambda edge: edge.x)
 
 
-def draw_active_edges(scene: QGraphicsScene, active_edges: list[EdgeInfoItem], 
-                        y: int, color: QColor) -> None:
-    len_edge = len(active_edges)
-    for i in range(0, len_edge - 1, 2):
+def draw_active_edges(scene: QGraphicsScene, active_edges: list[EdgeInfoItem],
+                      y: int, color: QColor) -> None:
+    for i in range(0, len(active_edges) - 1, 2):
         x1, x2 = int(active_edges[i].x), int(active_edges[i + 1].x)
         draw_line(scene, QLine(x1, y, x2, y), color)
 
@@ -121,6 +120,7 @@ def draw_line(scene: QGraphicsScene, line: QLine, color: QColor) -> None:
     scene.addLine(line.toLineF(), color)
 
 
-def draw_edges(scene: QGraphicsScene, edges: list[QLine], color: QColor) -> None:
+def draw_edges(scene: QGraphicsScene,
+               edges: list[QLine], color: QColor) -> None:
     for edge in edges:
         draw_line(scene, edge, color)

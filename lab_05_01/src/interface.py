@@ -20,12 +20,11 @@ class Interface(QMainWindow):
         self.pen_color_label = self.findChild(QLabel, 'PenColor')
         self.pen_color = QColor(0, 0, 0)
 
-        self.with_delay: QCheckBox = self.findChild(QCheckBox, "checkBox")
-        self.time_label = self.findChild(QLabel, "timeLabel")
+        self.with_delay: QCheckBox = self.findChild(QCheckBox, 'checkBox')
+        self.time_label = self.findChild(QLabel, 'timeLabel')
 
         self.__setup_scene()
         self.__setup_buttons()
-
 
     def __setup_scene(self):
         self.scene = QGraphicsScene()
@@ -36,7 +35,6 @@ class Interface(QMainWindow):
         self.view.setTransform(transform)
         self.view.mousePressEvent = self.add_point
         self.scene.setSceneRect(0, 0, 831, 873)
-
 
     def __setup_buttons(self):
         self.background_color_button = self.findChild(
@@ -56,7 +54,6 @@ class Interface(QMainWindow):
         self.clear_button = self.findChild(QPushButton, 'clearBtn')
         self.clear_button.clicked.connect(self.clear)
 
-
     def choose_background_color(self):
         color_dialog = QColorDialog(self)
         if color_dialog.exec():
@@ -66,7 +63,6 @@ class Interface(QMainWindow):
             )
             self.view.setBackgroundBrush(self.background_color)
 
-
     def choose_pen_color(self):
         color_dialog = QColorDialog(self)
         if color_dialog.exec():
@@ -75,10 +71,10 @@ class Interface(QMainWindow):
                 f'background-color: {self.pen_color.name()}'
             )
 
-
     def paint_shape(self):
         if len(self.figures) == 0:
-            QMessageBox.warning(self, 'Ошибка', 'Нет ни одной замкнутой фигуры!')
+            QMessageBox.warning(
+                self, 'Ошибка', 'Нет ни одной замкнутой фигуры!')
             return
         delay = 0.0
         if self.with_delay.checkState() == Qt.CheckState.Checked:
@@ -91,44 +87,40 @@ class Interface(QMainWindow):
         self.update_time_label(end - start)
         self.figures.clear()
 
-
     def close_shape(self):
         if len(self.curr_figure) == 0:
             return
-        draw.draw_line(self.scene, QLine(self.curr_figure[0], self.curr_figure[-1]), self.pen_color)
+        draw.draw_line(self.scene, QLine(
+            self.curr_figure[0], self.curr_figure[-1]), self.pen_color)
+
         self.figures.append(self.curr_figure)
         self.curr_figure = QPolygon()
 
-
     def add_point(self, event):
-        """
-            Adds a point by clicking the left mouse button on the QGraphicsView
-        """
+        """Adds a point by clicking the left mouse button on the
+        QGraphicsView."""
         if event.button() != Qt.MouseButton.LeftButton:
             return
-        
+
         pos = self.view.mapToScene(event.pos())
         point = QPointF(pos.x(), pos.y()).toPoint()
         self.curr_figure.append(point)
 
         self.update_scene(point)
 
-
     def update_scene(self, new_point: QPoint):
-        """
-            Adds new point to scene and draws line from last point to new if it's possible
-        """
-        self.scene.addEllipse(new_point.x() - 2, new_point.y() - 2, 4, 4, self.pen_color, self.pen_color)
-        if len(self.curr_figure) > 1:
-            draw.draw_line(self.scene, QLine(new_point, self.curr_figure[-2]), self.pen_color)
+        """Adds new point to scene and draws line from last point to new if
+        it's possible."""
+        self.scene.addEllipse(
+            new_point.x() - 2, new_point.y() - 2, 4, 4, self.pen_color, self.pen_color)
 
+        if len(self.curr_figure) > 1:
+            draw.draw_line(self.scene, QLine(
+                new_point, self.curr_figure[-2]), self.pen_color)
 
     def update_time_label(self, time: float):
-        """
-            Time in seconds
-        """
-        self.time_label.setText(f"{time * 1000: .4f} мс")
-
+        """Time in seconds."""
+        self.time_label.setText(f'{time * 1000: .4f} мс')
 
     def clear(self):
         self.scene.clear()
