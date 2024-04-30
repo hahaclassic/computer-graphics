@@ -1,6 +1,6 @@
 import time
 from PyQt6.QtWidgets import QGraphicsScene, QApplication
-from PyQt6.QtGui import QColor, QImage, QPolygon
+from PyQt6.QtGui import QColor, QImage
 from PyQt6.QtCore import QLine, QPoint, QPointF
 
 EPS = 1e-07
@@ -19,7 +19,7 @@ class FillParameters:
         self.color = color
 
 
-def fill_figure_with_seed_point(fill: FillParameters, seed_point: QPoint, delay: float):
+def fill_figure_with_seed_point(fill: FillParameters, seed_point: QPoint, delay: float) -> None:
     cond = BoundaryCond()
     stack = [seed_point]
 

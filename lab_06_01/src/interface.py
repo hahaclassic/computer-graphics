@@ -11,7 +11,6 @@ class Interface(QMainWindow):
         super().__init__()
         uic.loadUi('ui/mainwindow.ui', self)
 
-        self.figures: list[QPolygon] = []
         self.curr_figure: QPolygon = QPolygon()
         # Seed point has original coordinates, not transformed to scene coord.
         self.seed_point: QPoint = None
@@ -96,9 +95,11 @@ class Interface(QMainWindow):
         if self.seed_point is None:
             QMessageBox.warning(self, 'Ошибка', 
                 'Выберите затравку.')
+            return
         if self.pen_color == self.background_color:
             QMessageBox.warning(self, 'Ошибка', 
                 'Цвет фона не должен соответствовать цвету рисования!')
+            return
         delay = 0.0
         if self.with_delay.checkState() == Qt.CheckState.Checked:
             delay = 0.0001
@@ -114,7 +115,6 @@ class Interface(QMainWindow):
         end = time.monotonic()
 
         self.update_time_label(end - start)
-        self.figures.clear()
         self.seed_point = None
 
     def close_shape(self):
@@ -123,7 +123,6 @@ class Interface(QMainWindow):
         draw.draw_line(self.scene, QLine(
             self.curr_figure[0], self.curr_figure[-1]), self.pen_color)
 
-        self.figures.append(self.curr_figure)
         self.curr_figure = QPolygon()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:  
@@ -204,9 +203,7 @@ class Interface(QMainWindow):
             return
         
         draw.draw_ellipse_build_in(self.scene, ellipse, self.pen_color)
-        self.figures.append(QPolygon())
 
     def clear(self):
         self.scene.clear()
-        self.figures.clear()
         self.curr_figure.clear()
