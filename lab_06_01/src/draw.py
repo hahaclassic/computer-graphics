@@ -1,34 +1,39 @@
 import time
 from PyQt6.QtWidgets import QGraphicsScene, QApplication
-from PyQt6.QtGui import QColor, QImage
+from PyQt6.QtGui import QColor
 from PyQt6.QtCore import QLine, QPoint, QPointF
 
 EPS = 1e-07
 
+
 class BoundaryCond:
-    def __init__(self, xl: int = 0, xr: int = 0, tx: int = 0, ty: int = 0) -> None:
+    def __init__(self, xl: int = 0, xr: int = 0,
+                 tx: int = 0, ty: int = 0) -> None:
         self.xl = xl
         self.xr = xr
         self.tx = tx
         self.ty = ty
 
+
 class FillParameters:
-    def __init__(self, scene: QGraphicsScene, image: QImage, color: QColor) -> None:
+    def __init__(self, scene: QGraphicsScene, color: QColor) -> None:
         self.scene = scene
-        self.img = image
+        self.view = scene.views()[0]
+        self.img = self.view.grab().toImage()
         self.color = color
 
 
-def fill_figure_with_seed_point(fill: FillParameters, seed_point: QPoint, delay: float) -> None:
+def fill_figure_with_seed_point(fill: FillParameters, 
+                                seed_point: QPoint, delay: float) -> None:
+    seed_point = fill.view.mapFromScene(seed_point.toPointF())
     cond = BoundaryCond()
     stack = [seed_point]
 
     while stack:
         seed_point = stack.pop()
         cond.tx, cond.ty = seed_point.x(), seed_point.y()
-
         draw_pixel(fill, seed_point)
-       
+
         cond.xr = fill_right_side(fill, QPoint(cond.tx + 1, seed_point.y()))
         cond.xr -= 1
         cond.xl = fill_left_side(fill, QPoint(cond.tx - 1, seed_point.y()))
@@ -50,8 +55,7 @@ def fill_figure_with_seed_point(fill: FillParameters, seed_point: QPoint, delay:
 
 def draw_pixel(fill: FillParameters, point: QPoint):
     fill.img.setPixel(point, fill.color.rgb())
-    view = fill.scene.views()[0]
-    mapped_point = view.mapToScene(point).toPoint()
+    mapped_point = fill.view.mapToScene(point).toPoint()
 
     fill.scene.addEllipse(
         mapped_point.x() - 2, mapped_point.y() - 2, 5, 5,
@@ -80,7 +84,8 @@ def fill_left_side(fill: FillParameters, point: QPoint):
     return x
 
 
-def row_traversal(fill: FillParameters, stack: list[QPoint], cond: BoundaryCond) -> list[QPoint]:
+def row_traversal(fill: FillParameters,
+                  stack: list[QPoint], cond: BoundaryCond) -> None:
     x, y = cond.xl, cond.ty
     while x <= cond.xr:
         flag = False
@@ -108,15 +113,17 @@ def row_traversal(fill: FillParameters, stack: list[QPoint], cond: BoundaryCond)
 def draw_line(scene: QGraphicsScene, line: QLine, color: QColor) -> None:
     scene.addLine(line.toLineF(), color)
 
-        
+
 class Ellipse:
-    def __init__(self, center: QPointF, semi_major_axis: float, semi_minor_axis: float) -> None:
+    def __init__(self, center: QPointF, semi_major_axis: float,
+                 semi_minor_axis: float) -> None:
         self.center = center
         self.semi_minor_axis = semi_minor_axis
         self.semi_major_axis = semi_major_axis
 
 
-def draw_ellipse_build_in(scene: QGraphicsScene, ellipse: Ellipse, color: QColor) -> None:
+def draw_ellipse_build_in(scene: QGraphicsScene,
+                          ellipse: Ellipse, color: QColor) -> None:
     scene.addEllipse(
         ellipse.center.x() - ellipse.semi_major_axis,
         ellipse.center.y() - ellipse.semi_minor_axis,

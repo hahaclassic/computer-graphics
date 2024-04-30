@@ -6,13 +6,13 @@ from PyQt6 import uic
 import src.draw as draw
 import time
 
+
 class Interface(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('ui/mainwindow.ui', self)
 
         self.curr_figure: QPolygon = QPolygon()
-        # Seed point has original coordinates, not transformed to scene coord.
         self.seed_point: QPoint = None
 
         self.background_color_label = self.findChild(QLabel, 'backgroundColor')
@@ -28,10 +28,10 @@ class Interface(QMainWindow):
         self.__setup_buttons()
 
     def __setup_input_fields(self):
-        self.input_point_x = self.findChild(QTextEdit, "pointX")
-        self.input_point_y = self.findChild(QTextEdit, "pointY")
-        self.input_seed_x = self.findChild(QTextEdit, "seedX")
-        self.input_seed_y = self.findChild(QTextEdit, "seedY")
+        self.input_point_x = self.findChild(QTextEdit, 'pointX')
+        self.input_point_y = self.findChild(QTextEdit, 'pointY')
+        self.input_seed_x = self.findChild(QTextEdit, 'seedX')
+        self.input_seed_y = self.findChild(QTextEdit, 'seedY')
 
         self.ellipse_center_x = self.findChild(QTextEdit, 'ellipseCenterX')
         self.ellipse_center_y = self.findChild(QTextEdit, 'ellipseCenterY')
@@ -93,22 +93,18 @@ class Interface(QMainWindow):
 
     def paint_shape(self):
         if self.seed_point is None:
-            QMessageBox.warning(self, 'Ошибка', 
-                'Выберите затравку.')
+            QMessageBox.warning(self, 'Ошибка',
+                                'Выберите затравку.')
             return
         if self.pen_color == self.background_color:
-            QMessageBox.warning(self, 'Ошибка', 
-                'Цвет фона не должен соответствовать цвету рисования!')
+            QMessageBox.warning(self, 'Ошибка',
+                                'Цвет фона не должен соответствовать цвету рисования!')
             return
         delay = 0.0
         if self.with_delay.checkState() == Qt.CheckState.Checked:
             delay = 0.0001
 
-        fill = draw.FillParameters(
-            self.scene, 
-            self.view.grab().toImage(),
-            self.pen_color
-        )
+        fill = draw.FillParameters(self.scene, self.pen_color)
 
         start = time.monotonic()
         draw.fill_figure_with_seed_point(fill, self.seed_point, delay)
@@ -125,7 +121,7 @@ class Interface(QMainWindow):
 
         self.curr_figure = QPolygon()
 
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:  
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if event.buttons() & Qt.MouseButton.LeftButton:
             point = self.view.mapToScene(event.pos()).toPoint()
             self.add_point(point)
@@ -136,7 +132,7 @@ class Interface(QMainWindow):
             self.add_point(point)
         elif event.button() == Qt.MouseButton.RightButton:
             self.update_seed_point(point)
-        
+
     def get_point_data(self) -> None:
         try:
             x = float(self.input_point_x.toPlainText())
@@ -156,7 +152,7 @@ class Interface(QMainWindow):
             QMessageBox.warning(
                 self, 'Ошибка', 'Некорректные данные в полях ввода затравки.')
             return
-        
+
         self.update_seed_point(QPointF(x, y).toPoint())
 
     def add_point(self, point: QPoint):
@@ -164,8 +160,6 @@ class Interface(QMainWindow):
         self.update_scene(point)
 
     def update_scene(self, new_point: QPoint):
-        """Adds new point to scene and draws line from last point to new if
-        it's possible."""
         self.scene.addEllipse(
             new_point.x() - 1, new_point.y() - 1, 2, 2, self.pen_color, self.pen_color)
 
@@ -178,10 +172,10 @@ class Interface(QMainWindow):
         self.time_label.setText(f'{time * 1000: .4f} мс')
 
     def update_seed_point(self, point: QPoint):
-        self.seed_point = self.view.mapFromScene(point.toPointF())
+        self.seed_point = point
         self.scene.addEllipse(
             point.x() - 2, point.y() - 2, 5, 5,
-            QColor("red"), QColor("red"))
+            QColor('red'), QColor('red'))
 
     def get_ellipse_data(self) -> tuple[draw.Ellipse, bool]:
         try:
@@ -196,12 +190,12 @@ class Interface(QMainWindow):
 
         center = QPointF(center_x, center_y)
         return draw.Ellipse(center, semi_major_axis, semi_minor_axis), True
-    
+
     def draw_ellipse(self):
         ellipse, ok = self.get_ellipse_data()
         if not ok:
             return
-        
+
         draw.draw_ellipse_build_in(self.scene, ellipse, self.pen_color)
 
     def clear(self):
