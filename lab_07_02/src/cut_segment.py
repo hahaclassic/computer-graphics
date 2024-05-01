@@ -79,9 +79,11 @@ def get_position_code(rect: QRect, point: QPoint) -> int:
 
 
 def create_window_arr(rect: QRect) -> list[int]:
-    return [
-        min(rect.left(), rect.right()),
-        max(rect.left(), rect.right()),
-        min(rect.bottom(), rect.top()),
-        max(rect.bottom(), rect.top())
-    ]
+    x_min, x_max = rect.left(), rect.right()
+    y_min, y_max = rect.bottom(), rect.top()
+    if x_min > x_max:
+        x_min, x_max = x_max, x_min
+    if y_min > y_max:
+        y_min, y_max = y_max, y_min
+
+    return [x_min, x_max, y_min, y_max]

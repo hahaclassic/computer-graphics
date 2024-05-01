@@ -1,0 +1,65 @@
+[
+    {
+        "description": "Отсечение отрезка общего положения, частично лежащего в области отсекателя",
+        "segments": [
+            {
+                "start_x": 111,
+                "start_y": 363,
+                "end_x": 508,
+                "end_y": 761
+            }
+        ],
+        "rectangle": {
+            "left_top_x": 175,
+            "left_top_y": 602,
+            "right_bottom_x": 548,
+            "right_bottom_y": 240
+        }
+    },
+    {
+        "description": "Обработка полностью видимого и невидимого отрезков общего положения",
+        "segments": [
+            {
+                "start_x": 274,
+                "start_y": 351,
+                "end_x": 431,
+                "end_y": 500
+            },
+            {
+                "start_x": 419,
+                "start_y": 733,
+                "end_x": 700,
+                "end_y": 517
+            }
+        ],
+        "rectangle": {
+            "left_top_x": 175,
+            "left_top_y": 602,
+            "right_bottom_x": 548,
+            "right_bottom_y": 240
+        }
+    },
+    {
+        "description": "Отсечение вертикального и горизонтального отрезков, частично лежащих в области отсекателя",
+        "segments": [
+            {
+                "start_x": 348, 
+                "start_y": 780,
+                "end_x": 348,
+                "end_y": 103
+            },
+            {
+                "start_x": 254,
+                "start_y": 416,
+                "end_x": 801,
+                "end_y": 416
+            }
+        ],
+        "rectangle": {
+            "left_top_x": 175,
+            "left_top_y": 602,
+            "right_bottom_x": 548,
+            "right_bottom_y": 240
+        }
+    }
+]
