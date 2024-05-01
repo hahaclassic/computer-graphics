@@ -6,6 +6,7 @@ VERTICAL = -1
 HORIZONTAL = 1
 GENERAL = 0
 
+
 def cohen_sutherland(rect: QRect, segment: QLine) -> tuple[QLine, bool]:
     fl, tan = get_segment_position(segment)
     p1, p2 = segment.p1(), segment.p2()
@@ -63,6 +64,7 @@ LEFT = 1
 RIGHT = 2
 BOTTOM = 4
 TOP = 8
+
 
 def get_position_code(rect: QRect, point: QPoint) -> int:
     code = 0

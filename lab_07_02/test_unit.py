@@ -42,25 +42,25 @@ def test_partially_visible_general_segment(rectangle1, general_segment) -> None:
     cutted, ok = cut.cohen_sutherland(rectangle1, general_segment)
     print(cutted, ok)
 
-    assert ok == True
+    assert ok
     assert equal(cutted, QLine(0, 5, 5, 10))
 
 
 def test_partially_visible_vertical_segment(rectangle1, vertical_segment) -> None:
     cutted, ok = cut.cohen_sutherland(rectangle1, vertical_segment)
     print(cutted, ok)
-    assert ok == True
+    assert ok
     assert equal(cutted, QLine(5, 5, 5, 10))
 
 
 def test_partially_visible_horizontal_segment(rectangle1, horizontal_segment) -> None:
     cutted, ok = cut.cohen_sutherland(rectangle1, horizontal_segment)
     print(cutted, ok)
-    assert ok == True
+    assert ok
     assert equal(cutted, QLine(0, 5, 10, 5))
 
 
 def test_invisible_general_segment(rectangle2, general_segment) -> None:
     cutted, ok = cut.cohen_sutherland(rectangle2, general_segment)
-    assert ok == False
+    assert not ok
     assert cutted == QLine()
