@@ -40,10 +40,12 @@ class Interface(QMainWindow):
     def __setup_buttons(self) -> None:
         self.cut_button = self.findChild(QPushButton, 'cutBtn')
         self.add_segment_button = self.findChild(QPushButton, 'addSegmentBtn')
-        self.close_polygon_button = self.findChild(QPushButton, 'closeShapeBtn')
+        self.close_polygon_button = self.findChild(
+            QPushButton, 'closeShapeBtn')
         self.add_point_button = self.findChild(QPushButton, 'addPointBtn')
         self.clear_button = self.findChild(QPushButton, 'clearBtn')
-        self.clear_polygon_button = self.findChild(QPushButton, 'deleteShapeBtn')
+        self.clear_polygon_button = self.findChild(
+            QPushButton, 'deleteShapeBtn')
 
         self.cut_button.clicked.connect(self.cut)
         self.add_segment_button.clicked.connect(self.add_segment)
@@ -64,7 +66,7 @@ class Interface(QMainWindow):
         ok = self.check_input_params()
         if not ok:
             return
-        
+
         start = time.monotonic()
         for seg in self.segments:
             cutted_seg, ok = cut.cyrus_beck(self.polygon, seg)
@@ -89,7 +91,7 @@ class Interface(QMainWindow):
             QMessageBox.warning(
                 self, 'Ошибка', 'Отсекатель должен быть выпуклым многоугольником!')
             return False
-        
+
         return True
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -106,7 +108,7 @@ class Interface(QMainWindow):
         point = self.view.mapToScene(event.pos()).toPoint()
         if event.buttons() & Qt.MouseButton.LeftButton:
             self.update_curr_segment(point)
-       
+
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         point = self.view.mapToScene(event.pos()).toPoint()
         if event.button() == Qt.MouseButton.LeftButton:
@@ -132,7 +134,7 @@ class Interface(QMainWindow):
         self.polygon.append(new_point)
 
         self.scene.addEllipse(
-            new_point.x() - 2, new_point.y() - 2, 4, 4, 
+            new_point.x() - 2, new_point.y() - 2, 4, 4,
             self.polygon_color, self.polygon_color)
 
         if len(self.polygon) > 1:
@@ -145,7 +147,7 @@ class Interface(QMainWindow):
         self.curr_segment.setP2(point)
         self.draw_segment(self.curr_segment, self.segment_color)
 
-    def update_scene(self):
+    def update_scene(self) -> None:
         self.scene.clear()
         self.draw_segments()
         self.draw_polygon()
@@ -169,7 +171,7 @@ class Interface(QMainWindow):
             QMessageBox.warning(
                 self, 'Ошибка', 'Некорректные данные в полях ввода новой точки отсекателя')
             return
-        
+
         self.update_polygon(QPointF(point_x, point_y).toPoint())
 
     def add_segment(self) -> None:
