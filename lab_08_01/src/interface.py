@@ -61,15 +61,10 @@ class Interface(QMainWindow):
         self.point_y = self.findChild(QTextEdit, 'point_y')
 
     def cut(self) -> None:
-        if len(self.segments) == 0:
-            QMessageBox.warning(
-                self, 'Ошибка', 'Введите хотя бы один отрезок.')
+        ok = self.check_input_params()
+        if not ok:
             return
-        if not self.is_closed:
-            QMessageBox.warning(
-                self, 'Ошибка', 'Замкните отсекатель (кол-во точек > 2)')
-            return
-
+        
         start = time.monotonic()
         for seg in self.segments:
             cutted_seg, ok = cut.cyrus_beck(self.polygon, seg)
@@ -80,6 +75,22 @@ class Interface(QMainWindow):
 
         self.update_time_label(end - start)
         self.segments.clear()
+
+    def check_input_params(self) -> bool:
+        if len(self.segments) == 0:
+            QMessageBox.warning(
+                self, 'Ошибка', 'Введите хотя бы один отрезок.')
+            return False
+        if not self.is_closed:
+            QMessageBox.warning(
+                self, 'Ошибка', 'Замкните отсекатель (кол-во точек > 2)')
+            return False
+        if not cut.is_polygon_convex(self.polygon):
+            QMessageBox.warning(
+                self, 'Ошибка', 'Отсекатель должен быть выпуклым многоугольником!')
+            return False
+        
+        return True
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         point = self.view.mapToScene(event.pos()).toPoint()
