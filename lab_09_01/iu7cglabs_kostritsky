@@ -2,7 +2,7 @@
 .PHONY: report-unittesting-latest.txt saveolds report-functesting-latest.txt
 .DEFAULT: run
 
-SRC_FILES := main.py ./src/cut_segment.py ./src/interface.py
+SRC_FILES := main.py ./src/cut_shapes.py ./src/interface.py 
 
 OUT_DIR := ./out
 RESULT_DIR := ./results

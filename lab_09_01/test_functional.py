@@ -1,7 +1,7 @@
 import pytest
 import json
 from src.interface import Interface
-from PyQt6.QtCore import QLine, QPointF, QPoint
+from PyQt6.QtCore import QPointF, QPoint
 from PyQt6.QtGui import QPolygon
 
 TEST_FILE = "./test_data/test.json"
@@ -85,5 +85,3 @@ def parse_cutter_data(json_cutter) -> QPolygon:
 def parse_point(json_point) -> QPoint:
     x, y = float(json_point["x"]), float(json_point["y"])
     return QPointF(x, y).toPoint()
-
-

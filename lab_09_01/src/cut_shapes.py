@@ -34,15 +34,15 @@ def get_normal(point1: QPoint, point2: QPoint, point3: QPoint) -> QVector2D:
     return normal.normalized()
 
 
-def get_intersection(polygon_edge: QLine, cutter_edge: QLine, 
+def get_intersection(polygon_edge: QLine, cutter_edge: QLine,
                      cutter_peak: QPoint) -> tuple[QPoint, bool]:
-    visiable1 = is_visiable(polygon_edge.p1(), cutter_edge.p1(), 
+    visiable1 = is_visiable(polygon_edge.p1(), cutter_edge.p1(),
                             cutter_edge.p2(), cutter_peak)
-    visiable2 = is_visiable(polygon_edge.p2(), cutter_edge.p1(), 
+    visiable2 = is_visiable(polygon_edge.p2(), cutter_edge.p1(),
                             cutter_edge.p2(), cutter_peak)
     if not (visiable1 ^ visiable2):
         return None, False
-   
+
     normal = get_normal(cutter_edge.p1(), cutter_edge.p2(), cutter_peak)
     vec = QVector2D(polygon_edge.p2() - polygon_edge.p1())
     w = QVector2D(polygon_edge.p1() - cutter_edge.p1())
@@ -54,19 +54,21 @@ def get_intersection(polygon_edge: QLine, cutter_edge: QLine,
     return QPointF(x, y).toPoint(), True
 
 
-def is_visiable(point: QPoint, peak1: QPoint, peak2: QPoint, peak3: QPoint) -> bool:
+def is_visiable(point: QPoint, peak1: QPoint,
+                peak2: QPoint, peak3: QPoint) -> bool:
     n = get_normal(peak1, peak2, peak3)
     return QVector2D.dotProduct(n, QVector2D(point - peak2)) >= 0
 
 
-def sutherland_hodgman(cutter: QPolygon, polygon: QPolygon) -> tuple[QPolygon, bool]:
+def sutherland_hodgman(
+        cutter: QPolygon, polygon: QPolygon) -> tuple[QPolygon, bool]:
     cutter = QPolygon(cutter)
     cutter.append(cutter[0])
     cutter.append(cutter[1])
-   
+
     for i in range(len(cutter) - 2):
         new = QPolygon()
-        f = polygon[0]  
+        f = polygon[0]
         if is_visiable(f, cutter[i], cutter[i + 1], cutter[i + 2]):
             new.append(f)
 
@@ -74,7 +76,8 @@ def sutherland_hodgman(cutter: QPolygon, polygon: QPolygon) -> tuple[QPolygon, b
         for j in range(1, len(polygon)):
             polygon_edge = QLine(s, polygon[j])
             cutter_edge = QLine(cutter[i], cutter[i + 1])
-            inter, ok = get_intersection(polygon_edge, cutter_edge, cutter[i + 2])
+            inter, ok = get_intersection(
+                polygon_edge, cutter_edge, cutter[i + 2])
             if ok:
                 new.append(inter)
             s = polygon[j]
@@ -83,10 +86,10 @@ def sutherland_hodgman(cutter: QPolygon, polygon: QPolygon) -> tuple[QPolygon, b
 
         if not len(new):
             return None, False
-        inter, ok = get_intersection(QLine(s, f), QLine(cutter[i], cutter[i + 1]), cutter[i + 2])
+        inter, ok = get_intersection(QLine(s, f), QLine(
+            cutter[i], cutter[i + 1]), cutter[i + 2])
         if ok:
             new.append(inter)
         polygon = QPolygon(new)
 
     return polygon, True
-

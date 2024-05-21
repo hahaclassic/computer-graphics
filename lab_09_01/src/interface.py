@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QMainWindow, QMessageBox, \
     QPushButton, QLabel, QGraphicsView, QGraphicsScene, QTextEdit
 from PyQt6.QtGui import QColor, QTransform, QMouseEvent, QPolygon
-from PyQt6.QtCore import Qt, QPointF, QPoint, QLine, QLineF
+from PyQt6.QtCore import Qt, QPointF, QPoint, QLine
 from PyQt6 import uic
 import src.cut_shapes as cut
 import time
@@ -40,13 +40,16 @@ class Interface(QMainWindow):
     def __setup_buttons(self) -> None:
         self.cut_button = self.findChild(QPushButton, 'cutBtn')
         self.clear_button = self.findChild(QPushButton, 'clearBtn')
-        
-        self.add_clipper_point_btn = self.findChild(QPushButton, 'addClipperPointBtn')
-        self.add_shape_point_btn = self.findChild(QPushButton, 'addShapePointBtn')
+
+        self.add_clipper_point_btn = self.findChild(
+            QPushButton, 'addClipperPointBtn')
+        self.add_shape_point_btn = self.findChild(
+            QPushButton, 'addShapePointBtn')
         self.close_clipper_btn = self.findChild(QPushButton, 'closeClipperBtn')
         self.close_shape_btn = self.findChild(QPushButton, 'closeShapeBtn')
         self.delete_shapes_btn = self.findChild(QPushButton, 'deleteShapeBtn')
-        self.delete_clipper_btn = self.findChild(QPushButton, 'deleteClipperBtn')
+        self.delete_clipper_btn = self.findChild(
+            QPushButton, 'deleteClipperBtn')
 
         self.add_clipper_point_btn.clicked.connect(self.add_clipper_point)
         self.add_shape_point_btn.clicked.connect(self.add_curr_shape_point)
@@ -74,7 +77,7 @@ class Interface(QMainWindow):
             if ok:
                 self.draw_shape(cutted_shape, self.result_color)
                 self.scene.update()
-    
+
         self.scene.update()
         end = time.monotonic()
 
@@ -110,7 +113,7 @@ class Interface(QMainWindow):
                 self, 'Ошибка', 'Отсекатель должен содержать минимум 3 вершины.')
             return
         self.is_clipper_closed = True
-        self.draw_segment(self.clipper[0], self.clipper[-1], 
+        self.draw_segment(self.clipper[0], self.clipper[-1],
                           self.clipper_color)
         self.scene.update()
 
@@ -119,7 +122,7 @@ class Interface(QMainWindow):
             QMessageBox.warning(
                 self, 'Ошибка', 'Фигура должна содержать минимум 3 вершины.')
             return
-        self.draw_segment(self.curr_shape[0], self.curr_shape[-1], 
+        self.draw_segment(self.curr_shape[0], self.curr_shape[-1],
                           self.shape_color)
         self.shapes.append(self.curr_shape)
         self.curr_shape = QPolygon()
@@ -137,7 +140,7 @@ class Interface(QMainWindow):
             self.clipper_color, self.clipper_color)
 
         if len(self.clipper) > 1:
-            self.draw_segment(new_point, self.clipper[-2], 
+            self.draw_segment(new_point, self.clipper[-2],
                               self.clipper_color)
             self.scene.update()
 
@@ -149,7 +152,7 @@ class Interface(QMainWindow):
             self.shape_color, self.shape_color)
 
         if len(self.curr_shape) > 1:
-            self.draw_segment(new_point, self.curr_shape[-2], 
+            self.draw_segment(new_point, self.curr_shape[-2],
                               self.shape_color)
             self.scene.update()
 
