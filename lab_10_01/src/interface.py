@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QMainWindow, QMessageBox, \
     QPushButton, QLabel, QGraphicsView, QGraphicsScene, QTextEdit, QComboBox
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QMatrix4x4
 from PyQt6.QtCore import QLineF
 from PyQt6 import uic
 import time
@@ -70,8 +70,13 @@ class Interface(QMainWindow):
         start = time.monotonic()
         lines = horizon.horizon_method(
             self.view, x_interval, z_interval, func, transform)
+        if lines is None:
+            QMessageBox.warning(
+                self, 'Ошибка', 'Выход за пределы плоскости отрисовки. \
+Уменьшите коэффициент масштабирования или измените входные интервалы.')
+            return
         self.draw_lines(lines)
-        # self.scene.update()
+        self.scene.update()
         end = time.monotonic()
 
         self.update_time_label(end - start)
@@ -88,10 +93,10 @@ class Interface(QMainWindow):
         self.time_label.setText(f'{time * 1000: .4f} мс')
 
     def get_data(self) -> tuple[horizon.Interval, horizon.Interval,
-                                horizon.Transformation]:
+                                QMatrix4x4]:
         x_interval = self.get_x_interval()
         z_interval = self.get_z_interval()
-        transform = self.get_transformation()
+        transform = self.get_transform()
         return x_interval, z_interval, transform
 
     def get_x_interval(self) -> horizon.Interval:
@@ -118,14 +123,15 @@ class Interface(QMainWindow):
 
         return horizon.Interval(start_z, end_z, step_z)
 
-    def get_transformation(self) -> horizon.Transformation:
-        rotation = self.get_angles()
+    def get_transform(self) -> QMatrix4x4:
+        matrix = self.get_rotate_matrix()
         scale_ratio = self.get_scale_ratio()
-        if rotation is None or scale_ratio is None:
+        if matrix is None or scale_ratio is None:
             return None
-        return horizon.Transformation(rotation, scale_ratio)
+        matrix.scale(scale_ratio)
+        return matrix
 
-    def get_angles(self) -> horizon.Rotation:
+    def get_rotate_matrix(self) -> QMatrix4x4:
         try:
             angle_x = float(self.input_angle_x.toPlainText())
             angle_y = float(self.input_angle_y.toPlainText())
@@ -134,8 +140,12 @@ class Interface(QMainWindow):
             QMessageBox.warning(
                 self, 'Ошибка', 'Некорректные данные в полях ввода углов поворота')
             return None
-
-        return horizon.Rotation(angle_x, angle_y, angle_z)
+        
+        transform = QMatrix4x4()
+        transform.rotate(angle_x, 1, 0, 0)
+        transform.rotate(angle_y, 0, 1, 0)
+        transform.rotate(angle_z, 0, 0, 1)
+        return transform
 
     def get_scale_ratio(self) -> float:
         try:

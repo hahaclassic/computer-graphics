@@ -11,37 +11,6 @@ class Interval:
         self.step = step
 
 
-class Rotation:
-    def __init__(self, angle_x: float, angle_y: float, angle_z: float) -> None:
-        """angles in degrees."""
-        self.angle_x = angle_x
-        self.angle_y = angle_y
-        self.angle_z = angle_z
-
-
-class Transformation:
-    def __init__(self, rotation: Rotation, scale_ratio: float) -> None:
-        self.rotation = rotation
-        self.scale_ratio = scale_ratio
-
-    def rotate_vector(self, vector: QVector3D) -> QVector3D:
-        transform = QMatrix4x4()
-        transform.rotate(self.rotation.angle_x, 1, 0, 0)
-        transform.rotate(self.rotation.angle_y, 0, 1, 0)
-        transform.rotate(self.rotation.angle_z, 0, 0, 1)
-
-        return transform.map(vector)
-
-    def scale_vector(self, vector: QVector3D) -> QVector3D:
-        transform = QMatrix4x4()
-        transform.scale(self.scale_ratio)
-        return transform.map(vector)
-
-    def transform_vector(self, vector: QVector3D) -> QVector3D:
-        vector = self.rotate_vector(vector)
-        return self.scale_vector(vector)
-
-
 TOP = 1
 BOTTOM = -1
 INVISIBLE = 0
@@ -55,6 +24,8 @@ class Horizon:
 
     def visible(self, point: QPointF) -> int:
         p = self.view.mapFromScene(point)
+        if p.x() >= len(self.bottom):
+            return None
         if p.y() <= self.bottom[p.x()]:
             return BOTTOM
         elif p.y() >= self.top[p.x()]:
@@ -63,8 +34,7 @@ class Horizon:
 
     def update(self, line: QLineF):
         p1, p2 = self.view.mapFromScene(
-            line.p1()), self.view.mapFromScene(
-            line.p2())
+            line.p1()), self.view.mapFromScene(line.p2())
         x1, y1, x2, y2 = p1.x(), p1.y(), p2.x(), p2.y()
         if (x2 - x1 == 0):
             self.top[x2] = max(self.top[x2], y2)
@@ -81,20 +51,17 @@ class Horizon:
                        horizon: list[int]) -> QPointF:
         p1, p2 = self.view.mapFromScene(point1), self.view.mapFromScene(point2)
         x1, y1, x2, y2 = p1.x(), p1.y(), p2.x(), p2.y()
-        dx = x2 - x1
-        dyc = y2 - y1
-        dyp = horizon[x2] - horizon[x1]
-        if dx == 0:
-            xi = x2
-            yi = horizon[x2]
-            return self.view.mapToScene(QPoint(xi, yi))
+        dx, dy = x2 - x1, y2 - y1
+        diff_horizon = horizon[x2] - horizon[x1]
+        xi, yi = x2, horizon[x2] # dx == 0
 
         if y1 == horizon[x1] and y2 == horizon[x2]:
-            return self.view.mapToScene(QPoint(x1, y1))
+            xi, yi = x1, y1
+        elif dx != 0:
+            m = dy / dx
+            xi = x1 - round(dx * (y1 - horizon[x1]) / (dy - diff_horizon))
+            yi = round((xi - x1) * m + y1)
 
-        m = dyc / dx
-        xi = x1 - round(dx * (y1 - horizon[x1]) / (dyc - dyp))
-        yi = round((xi - x1) * m + y1)
         return self.view.mapToScene(QPoint(xi, yi))
 
     def top_intersection(self, point1: QPointF, point2: QPointF) -> QPointF:
@@ -105,55 +72,49 @@ class Horizon:
 
 
 def horizon_method(view: QGraphicsView, x_interval: Interval, z_interval: Interval,
-        func: Callable[[float, float], float], transform: Transformation) -> list[QLineF]:
+        func: Callable[[float, float], float], transform: QMatrix4x4) -> list[QLineF]:
     result_lines: list[QLineF] = []
     horizon = Horizon(view)
-    left, right = None, None
+    left_side_point, right_side_point = None, None
 
     z = z_interval.end
     while z >= z_interval.start - z_interval.step / 2:
         prev_vec = QVector3D(x_interval.start, func(x_interval.start, z), z)
-        prev = transform.transform_vector(prev_vec).toPointF()
+        prev = transform.map(prev_vec).toPointF()
         flag_prev = horizon.visible(prev)
-        result_lines.extend(update_side(horizon, prev, left))
-        left = prev
+        if flag_prev is None:
+            return None
+        left_side_point = update_side(result_lines, prev, left_side_point)
 
         x = x_interval.start
         while x <= x_interval.end + x_interval.step / 2:
             curr_vec = QVector3D(x, func(x, z), z)
-            curr = transform.transform_vector(curr_vec).toPointF()
+            curr = transform.map(curr_vec).toPointF()
 
             flag_curr = horizon.visible(curr)
-            result_lines.extend(add_lines(
-                horizon, [flag_prev, flag_curr],
-                [prev, curr]
-            ))
+            if flag_curr is None:
+                return None
+            add_lines(horizon, result_lines, 
+                      [flag_prev, flag_curr], [prev, curr])
             prev = curr
             flag_prev = flag_curr
             x += x_interval.step
 
-        result_lines.extend(update_side(horizon, prev, right))
-        right = prev
+        right_side_point = update_side(result_lines, prev, right_side_point)
         z -= z_interval.step
 
     return result_lines
 
 
-def update_side(horizon: Horizon, curr: QPointF,
-                prev: QPointF) -> list[QLineF]:
-    if prev is None:
-        return []
-
-    flag_prev = horizon.visible(prev)
-    flag_curr = horizon.visible(curr)
-    return add_lines(horizon,
-                     [flag_prev, flag_curr],
-                     [prev, curr])
+def update_side(lines: list[QLineF], curr_side_point: QPointF,
+                prev_side_point: QPointF) -> QLineF:
+    if not prev_side_point is None:
+        lines.append(QLineF(prev_side_point, curr_side_point))
+    return curr_side_point
 
 
-def add_lines(horizon: Horizon,
-              flags: list[int], points: list[QPointF]) -> list[QLineF]:
-    lines: list[QLineF] = []
+def add_lines(horizon: Horizon, lines: list[QLineF],
+              flags: list[int], points: list[QPointF]) -> None:
     flag_prev, flag_curr = flags[0], flags[1]
     prev, curr = points[0], points[1]
 
@@ -164,21 +125,18 @@ def add_lines(horizon: Horizon,
             bottom_intersection = horizon.bottom_intersection(prev, curr)
 
         if flag_prev == BOTTOM:
-            line = QLineF(prev, bottom_intersection)
-            lines.append(line)
+            add_line(horizon, lines, QLineF(prev, bottom_intersection))
         if flag_curr == BOTTOM:
-            line = QLineF(bottom_intersection, curr)
-            lines.append(line)
+            add_line(horizon, lines, QLineF(bottom_intersection, curr))
         if flag_prev == TOP:
-            line = QLineF(prev, top_intersection)
-            lines.append(line)
+            add_line(horizon, lines, QLineF(prev, top_intersection))
         if flag_curr == TOP:
-            line = QLineF(top_intersection, curr)
-            lines.append(line)
+            add_line(horizon, lines, QLineF(top_intersection, curr))
 
     elif flag_curr != INVISIBLE:
-        line = QLineF(prev, curr)
-        lines.append(line)
-        horizon.update(line)
+        add_line(horizon, lines, QLineF(prev, curr))
 
-    return lines
+
+def add_line(horizon: Horizon, lines: list[QLineF], line: QLineF) -> None:
+    lines.append(line)
+    horizon.update(line)
