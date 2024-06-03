@@ -2,6 +2,7 @@ import pytest
 import json
 from src.interface import Interface
 import src.horizon as horizon
+from PyQt6.QtGui import QMatrix4x4
 
 TEST_FILE = "./test_data/test.json"
 RESULT_DIR = "./results/"
@@ -39,8 +40,7 @@ def test(interface: Interface):
             descrp_f.write(test["description"])
 
         image = interface.grab()
-
-        image.save(path + "_image_.png")
+        image.save(path + "_image.png")
 
     report.close()
     
@@ -66,15 +66,17 @@ def run_test(interface: Interface, test) -> float:
     return elapsed_time
 
 
-def parse_transform_data(json_transform) -> horizon.Transformation:
+def parse_transform_data(json_transform) -> QMatrix4x4:
     angle_x = float(json_transform["angle_x"])
     angle_y = float(json_transform["angle_y"])
     angle_z = float(json_transform["angle_z"])
     scale_ratio = float(json_transform["scale_ratio"])
-    return horizon.Transformation(
-        horizon.Rotation(angle_x, angle_y, angle_z),
-        scale_ratio
-    )
+    transform = QMatrix4x4()
+    transform.rotate(angle_x, 1, 0, 0)
+    transform.rotate(angle_y, 0, 1, 0)
+    transform.rotate(angle_z, 0, 0, 1)
+    transform.scale(scale_ratio)
+    return transform
 
 
 def parse_interval_data(json_interval) -> horizon.Interval:

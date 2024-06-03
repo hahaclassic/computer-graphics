@@ -33,6 +33,11 @@ def invisible_point() -> QPointF:
 
 
 @pytest.fixture
+def outside_view_point() -> QPointF:
+    return QPointF(120, 120)
+
+
+@pytest.fixture
 def custom_horizon() -> horizon.Horizon:
     h = horizon.Horizon(MockView(100, 100))
     h.bottom = [15] * 100
@@ -52,3 +57,7 @@ def test_visible_with_invisible_point(custom_horizon, invisible_point) -> None:
     v = custom_horizon.visible(invisible_point)
     assert horizon.INVISIBLE == v
 
+def test_visible_with_outsize_view_point(custom_horizon, outside_view_point) -> None:
+    v = custom_horizon.visible(outside_view_point)
+    assert v is None
+    
