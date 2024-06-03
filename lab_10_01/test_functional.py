@@ -1,8 +1,6 @@
 import pytest
 import json
 from src.interface import Interface
-from PyQt6.QtCore import QPointF, QPoint
-from PyQt6.QtGui import QPolygon
 import src.horizon as horizon
 
 TEST_FILE = "./test_data/test.json"

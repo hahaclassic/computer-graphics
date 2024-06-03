@@ -1,5 +1,6 @@
 from math import cos, sin, sqrt, exp, fabs
 
+
 def func1(x: float, z: float) -> float:
     return cos(x) * sin(z)
 

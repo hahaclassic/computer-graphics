@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QMainWindow, QMessageBox, \
     QPushButton, QLabel, QGraphicsView, QGraphicsScene, QTextEdit, QComboBox
-from PyQt6.QtGui import QColor, QTransform, QPolygon
-from PyQt6.QtCore import Qt, QPointF, QPoint, QLineF, QLine
+from PyQt6.QtGui import QColor
+from PyQt6.QtCore import QLineF
 from PyQt6 import uic
 import time
 
@@ -9,6 +9,7 @@ import src.horizon as horizon
 import src.functions as functions
 
 EPS = 1e-07
+
 
 class Interface(QMainWindow):
     def __init__(self) -> None:
@@ -58,30 +59,23 @@ class Interface(QMainWindow):
         self.input_angle_z = self.findChild(QTextEdit, 'angle_z')
         self.input_scale = self.findChild(QTextEdit, 'scale')
 
-
     def plot(self) -> None:
-        x_interval = self.get_x_interval()
-        if x_interval is None:
+        x_interval, z_interval, transform = self.get_data()
+        if x_interval is None or z_interval is None or transform is None:
             return
-        z_interval = self.get_z_interval()
-        if x_interval is None:
-            return
-        transform = self.get_transformation()
-        if transform is None:
-            return 
-        
+
         self.scene.clear()
         func = self.functions[self.function_box.currentIndex()]
 
         start = time.monotonic()
-        lines = horizon.horizon_method(self.scene, x_interval, z_interval, func, transform)
-    
+        lines = horizon.horizon_method(
+            self.view, x_interval, z_interval, func, transform)
         self.draw_lines(lines)
-        self.scene.update()
+        # self.scene.update()
         end = time.monotonic()
 
         self.update_time_label(end - start)
-    
+
     def draw_line(self, line: QLineF, color: QColor) -> None:
         self.scene.addLine(line, color)
 
@@ -92,7 +86,14 @@ class Interface(QMainWindow):
     def update_time_label(self, time: float) -> None:
         """Time in seconds."""
         self.time_label.setText(f'{time * 1000: .4f} мс')
-    
+
+    def get_data(self) -> tuple[horizon.Interval, horizon.Interval,
+                                horizon.Transformation]:
+        x_interval = self.get_x_interval()
+        z_interval = self.get_z_interval()
+        transform = self.get_transformation()
+        return x_interval, z_interval, transform
+
     def get_x_interval(self) -> horizon.Interval:
         try:
             start_x = float(self.input_start_x.toPlainText())
@@ -102,9 +103,9 @@ class Interface(QMainWindow):
             QMessageBox.warning(
                 self, 'Ошибка', 'Некорректные данные в полях ввода интервала по оси X')
             return None
-        
+
         return horizon.Interval(start_x, end_x, step_x)
-    
+
     def get_z_interval(self) -> horizon.Interval:
         try:
             start_z = float(self.input_start_z.toPlainText())
@@ -114,9 +115,9 @@ class Interface(QMainWindow):
             QMessageBox.warning(
                 self, 'Ошибка', 'Некорректные данные в полях ввода интервала по оси Z')
             return None
-        
+
         return horizon.Interval(start_z, end_z, step_z)
-    
+
     def get_transformation(self) -> horizon.Transformation:
         rotation = self.get_angles()
         scale_ratio = self.get_scale_ratio()
@@ -133,9 +134,9 @@ class Interface(QMainWindow):
             QMessageBox.warning(
                 self, 'Ошибка', 'Некорректные данные в полях ввода углов поворота')
             return None
-        
+
         return horizon.Rotation(angle_x, angle_y, angle_z)
-    
+
     def get_scale_ratio(self) -> float:
         try:
             scale = float(self.input_scale.toPlainText())
@@ -145,9 +146,9 @@ class Interface(QMainWindow):
             return None
         if scale < EPS:
             QMessageBox.warning(self, 'Некорректные данные',
-                                    f'Коэффициент масшабирования должен быть не меньше {EPS}.')
+                                f'Коэффициент масшабирования должен быть не меньше {EPS}.')
             return None
-        
+
         return scale
 
     def clear(self) -> None:
