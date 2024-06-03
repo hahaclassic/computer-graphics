@@ -39,6 +39,7 @@ report-functesting-latest.txt:
 	rm -rf $(RESULT_DIR)
 	mkdir $(RESULT_DIR)
 	./scripts/coverage.sh test_functional.py > $@
+	pytest ./test_functional.py
 	cat ./func_buf.txt >> $@
 	rm -f func_buf.txt
 
