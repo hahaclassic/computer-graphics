@@ -108,7 +108,7 @@ def horizon_method(view: QGraphicsView, x_interval: Interval, z_interval: Interv
 
 def update_side(lines: list[QLineF], curr_side_point: QPointF,
                 prev_side_point: QPointF) -> QLineF:
-    if not prev_side_point is None:
+    if prev_side_point is not None:
         lines.append(QLineF(prev_side_point, curr_side_point))
     return curr_side_point
 
